@@ -1,0 +1,23 @@
+﻿body {
+    font-family: Arial, sans-serif;
+}
+
+#game-container {
+    width: 800px;
+    height: 600px;
+    border: 1px solid #000;
+    background-color: #000;
+    position: relative;
+}
+
+#messages {
+    margin-top: 20px;
+}
+
+#user, #message {
+    margin-top: 10px;
+}
+
+button {
+    margin-top: 10px;
+}
