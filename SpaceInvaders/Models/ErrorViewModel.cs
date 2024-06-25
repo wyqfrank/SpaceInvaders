@@ -6,4 +6,9 @@ namespace SpaceInvaders.Models
 
         public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
+
+    public class Player
+    {
+        public int Health = 1;
+    }
 }
