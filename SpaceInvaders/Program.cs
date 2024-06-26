@@ -1,3 +1,4 @@
+using SpaceInvaders.Hubs;
 namespace SpaceInvaders
 {
     public class Program
@@ -8,6 +9,7 @@ namespace SpaceInvaders
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddSignalR();
 
             var app = builder.Build();
 
@@ -25,7 +27,7 @@ namespace SpaceInvaders
             app.UseRouting();
 
             app.UseAuthorization();
-
+            app.MapHub<GameHub>("/connect");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
