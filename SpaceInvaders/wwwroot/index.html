@@ -25,7 +25,6 @@
         <canvas id="drawingCanvas" width="720" height="720" style="background-color: black;"></canvas>
     </div>
     <script>
-
         const canvasWidth = 720;
         const canvasHeight = 720;
         // Create connection
@@ -37,13 +36,13 @@
         }).catch(err => console.error(err.toString()));
         // Start connection
 
-        // document.getElementById("submit").addEventListener("click", ()=>{
-        //     const name = document.getElementById("input").value;
-        //     connection.invoke("RegisterPlayer", name).catch(err => console.error(err.toString()));
-        //     const partId = document.getElementById("party").value;
-        //     console.log("Player joined the party with id", partId);
-        //     connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
-        // });
+        document.getElementById("submit").addEventListener("click", ()=>{
+            // const name = document.getElementById("input").value;
+            // connection.invoke("RegisterPlayer", name).catch(err => console.error(err.toString()));
+            const partId = document.getElementById("party").value;
+            console.log("Player joined the party with id", partId);
+            connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
+        });
         // Handle receiving player position
         connection.on("ReceivePlayerPosition", (playerId, x, y) => {
             context.clearRect(0,0, canvasWidth, canvasHeight);
@@ -51,23 +50,15 @@
             context.fillRect(x, y, 50, 50);
         });
 
-        
-        // Handle player connected
         connection.on("PlayerConnected", (connectionId) => {
             console.log(`Player connected: ${connectionId}`);
         });
-
-        // Handle player disconnected
         connection.on("PlayerDisconnected", (connectionId) => {
             console.log(`Player disconnected: ${connectionId}`);
         });
-
-        // Handle player joined room
         connection.on("PlayerJoinedRoom", (connectionId) => {
             console.log(`Player joined room: ${connectionId}`);
         });
-
-        // Handle player left room
         connection.on("PlayerLeftRoom", (connectionId) => {
             console.log(`Player left room: ${connectionId}`);
         });
@@ -87,8 +78,6 @@
         })
 
         document.addEventListener('keydown', function(event) {
-
-            console.log("Event")
             let direction = null;
             switch (event.key) {
                 case 'ArrowUp':
