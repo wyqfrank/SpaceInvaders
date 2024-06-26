@@ -28,7 +28,7 @@ namespace SpaceInvaders
             app.UseRouting();
 
             app.UseAuthorization();
-
+            app.MapHub<GameHub>("/connect");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");

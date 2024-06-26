@@ -1,21 +1,54 @@
-﻿<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>Space Invaders</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.11/signalr.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <meta charset="UTF-8">
+    <title>SignalR Groups Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.9/signalr.min.js"></script>
 </head>
 <body>
-    <div id="game-container">
-        <!-- Game elements will go here -->
-    </div>
-    <div id="messages"></div>
-    <input type="text" id="user" placeholder="Username" />
-    <input type="text" id="message" placeholder="Message" />
-    <button onclick="sendMessage()">Send</button>
 
-    <script src="js/game.js"></script>
-    <script src="js/chat.js"></script>
+    <input type="text" id="input">
+    <input type="button" value="Join server" id="submit">
+    <script>
+        // Create connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/connect")
+            .build();
+
+        // Start connection
+        connection.start().then(() => {
+            console.log("Connected to the hub");
+        }).catch(err => console.error(err.toString()));
+
+        document.getElementById("submit").addEventListener("click", ()=>{
+            const name = document.getElementById("input").value;
+            connection.invoke("RegisterPlayer", name).catch(err => console.error(err.toString()));
+        });
+
+        // Handle receiving player position
+        connection.on("ReceivePlayerPosition", (playerId, x, y, z) => {
+            console.log(`Player ${playerId} moved to position (${x}, ${y}, ${z})`);
+        });
+
+        // Handle player connected
+        connection.on("PlayerConnected", (connectionId) => {
+            console.log(`Player connected: ${connectionId}`);
+        });
+
+        // Handle player disconnected
+        connection.on("PlayerDisconnected", (connectionId) => {
+            console.log(`Player disconnected: ${connectionId}`);
+        });
+
+        // Handle player joined room
+        connection.on("PlayerJoinedRoom", (connectionId) => {
+            console.log(`Player joined room: ${connectionId}`);
+        });
+
+        // Handle player left room
+        connection.on("PlayerLeftRoom", (connectionId) => {
+            console.log(`Player left room: ${connectionId}`);
+        });
+    </script>
 </body>
 </html>
