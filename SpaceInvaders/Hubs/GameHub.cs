@@ -61,7 +61,7 @@ namespace SpaceInvaders.Hubs
     public class GameHub : Hub
     {
         public static List<Game> Games = new List<Game>();
-        public Player ? currentPlayer = null;
+        public static Player ? currentPlayer = null;
         public override async Task OnConnectedAsync()
         {
             string connectionId = Context.ConnectionId;
@@ -72,12 +72,10 @@ namespace SpaceInvaders.Hubs
         }
         public async Task MovePlayer(string direction)
         {
-            Console.WriteLine(direction);
             if(currentPlayer != null && currentPlayer.partyId != null)
             {
                 Console.WriteLine("MOving ");
                 currentPlayer.move_player(direction);
-
                 // use group to make private server/party for users
                 await Clients.Group(currentPlayer.partyId).SendAsync("ReceivePlayerMove", currentPlayer.x_pos, currentPlayer.y_pos);
             }
