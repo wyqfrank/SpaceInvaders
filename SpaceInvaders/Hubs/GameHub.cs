@@ -6,30 +6,21 @@ namespace SpaceInvaders.Hubs
 {
 
     // Class Implementation of player
-    public class Player : IPlayer
-    {
-        public uint id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string connectionId = string.Empty;
-        public string name;
-        public string Name { get => name; set => value = name; }
-        public int score { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int x_pos { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int y_pos { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public double speed { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public Player(string connectionId, string name, int x = 0, int y = 0)
-        {   
-            this.connectionId = connectionId;
-            this.name = name;
-        }
-        public void move_player()
+    public class Game{
+        public List<Player> players = new List<Player>();
+        public string partyId = string.Empty;
+        public Game(string partyId)
         {
-            throw new NotImplementedException();
+            this.partyId = partyId;
         }
-    }
-    public class GameHub : Hub
-    {
-        public static List<Player> players = new List<Player>();  
-        public static bool Exists(Player player)
+        public void PrintPlayers()
+        {
+            foreach (var player in players)
+            {
+                Console.WriteLine(player.name);
+            }
+        }
+        public bool Exists(Player player)
         {
             foreach(var p in players)
             {
@@ -39,40 +30,76 @@ namespace SpaceInvaders.Hubs
                 }
             }
             return false;
-        }  
-        public async Task RegisterPlayer(string name)
+        }
+    }
+    public class Player
+    {
+        public string partyId = null;
+        public string connectionId = string.Empty;
+        public string name;
+        public int score;
+        public int x_pos;
+        public int y_pos;
+        public int speed = 10;
+        public Player(string connectionId, string name = "default", int x = 310, int y = -310)
         {
-            string connectionId = Context.ConnectionId;
-            Player player = new Player(connectionId, name);
-
-            if(!Exists(player))
+            this.connectionId = connectionId;
+            this.name = name;
+        }
+        public void move_player(string direction)
+        {
+            if(direction == "left")
             {
-                players.Add(player);
-                Console.WriteLine($"Player Count: {players.Count}");
-                foreach (Player p in players)
-                {
-                    Console.WriteLine($"{p.Name}, {p.connectionId}");
-                }
-                await Groups.AddToGroupAsync(connectionId, "Players");
-                await Clients.Group("Players").SendAsync("PlayerConnected", connectionId);
+                x_pos -= speed;
+            }
+            else if(direction == "right")
+            {
+                x_pos += speed;
             }
         }
-        public async Task SendPlayerPosition(int x, int y)
+    }
+    public class GameHub : Hub
+    {
+        public static List<Game> Games = new List<Game>();
+        public Player ? currentPlayer = null;
+        public override async Task OnConnectedAsync()
         {
-            string playerId = Context.ConnectionId;
-            await Clients.All.SendAsync("RecievePlayerPosition", playerId, x, y);
+            string connectionId = Context.ConnectionId;
+            Player player = new Player(connectionId);
+            currentPlayer = player;
+            await Groups.AddToGroupAsync(connectionId, "Players");
+            await Clients.Group("Players").SendAsync("PlayerConnected", connectionId);
+        }
+        public async Task MovePlayer(string direction)
+        {
+            Console.WriteLine(direction);
+            if(currentPlayer != null && currentPlayer.partyId != null)
+            {
+                Console.WriteLine("MOving ");
+                currentPlayer.move_player(direction);
+
+                // use group to make private server/party for users
+                await Clients.Group(currentPlayer.partyId).SendAsync("ReceivePlayerMove", currentPlayer.x_pos, currentPlayer.y_pos);
+            }
         }
         // Joining a specific game room
-        public async Task JoinGameRoom(string roomId)
+        public async Task JoinGameRoom(string partyId)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-            await Clients.Group(roomId).SendAsync("PlayerJoinedRoom", Context.ConnectionId);
+            if(currentPlayer != null)
+            {
+                currentPlayer.partyId = partyId;
+                await Groups.AddToGroupAsync(Context.ConnectionId, partyId);
+                await Clients.Group(partyId).SendAsync("PlayerJoinedRoom", Context.ConnectionId);
+            }
         }
         // Leaving a specific game room
         public async Task LeaveGameRoom(string roomId)
         {
+            if(currentPlayer != null)
+            {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
             await Clients.Group(roomId).SendAsync("PlayerLeftRoom", Context.ConnectionId);
+            }
         }
     }
 }

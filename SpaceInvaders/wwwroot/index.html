@@ -4,32 +4,54 @@
     <meta charset="UTF-8">
     <title>SignalR Groups Example</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.9/signalr.min.js"></script>
+    <style>
+        body { margin: 0; }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            border: 1px solid white;
+        }
+    </style>
 </head>
 <body>
-
-    <input type="text" id="input">
+    <input type="name" value="enter name" id="input">
+    <input type="party id" value="enter party id" id="party">
     <input type="button" value="Join server" id="submit">
+    <div class="container">
+        <h1 class="display-4">SpaceInvaders</h1>
+        <canvas id="drawingCanvas" width="720" height="720" style="background-color: black;"></canvas>
+    </div>
     <script>
+
+        const canvasWidth = 720;
+        const canvasHeight = 720;
         // Create connection
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/connect")
             .build();
-
-        // Start connection
         connection.start().then(() => {
-            console.log("Connected to the hub");
+        console.log("Connected to the hub");
         }).catch(err => console.error(err.toString()));
+        // Start connection
 
-        document.getElementById("submit").addEventListener("click", ()=>{
-            const name = document.getElementById("input").value;
-            connection.invoke("RegisterPlayer", name).catch(err => console.error(err.toString()));
-        });
-
+        // document.getElementById("submit").addEventListener("click", ()=>{
+        //     const name = document.getElementById("input").value;
+        //     connection.invoke("RegisterPlayer", name).catch(err => console.error(err.toString()));
+        //     const partId = document.getElementById("party").value;
+        //     console.log("Player joined the party with id", partId);
+        //     connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
+        // });
         // Handle receiving player position
-        connection.on("ReceivePlayerPosition", (playerId, x, y, z) => {
-            console.log(`Player ${playerId} moved to position (${x}, ${y}, ${z})`);
+        connection.on("ReceivePlayerPosition", (playerId, x, y) => {
+            context.clearRect(0,0, canvasWidth, canvasHeight);
+            context.fillStyle = '#FF5733'; // Orange color
+            context.fillRect(x, y, 50, 50);
         });
 
+        
         // Handle player connected
         connection.on("PlayerConnected", (connectionId) => {
             console.log(`Player connected: ${connectionId}`);
@@ -48,6 +70,43 @@
         // Handle player left room
         connection.on("PlayerLeftRoom", (connectionId) => {
             console.log(`Player left room: ${connectionId}`);
+        });
+
+        const canvas = document.getElementById('drawingCanvas');
+        const context = canvas.getContext('2d');
+
+        context.fillStyle = '#FF5733'; // Orange color
+        context.fillRect(0, 0, 50, 50); // Player size example
+        connection.on("ReceivePlayerMove", function(x, y){
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            // Draw player
+
+            console.log(x, y)
+            context.fillStyle = '#FF5733'; // Orange color
+            context.fillRect(x, y, 50, 50); // Player size example
+        })
+
+        document.addEventListener('keydown', function(event) {
+
+            console.log("Event")
+            let direction = null;
+            switch (event.key) {
+                case 'ArrowUp':
+                    direction = 'up';
+                    break;
+                case 'ArrowDown':
+                    direction = 'down';
+                    break;
+                case 'ArrowLeft':
+                    direction = 'left';
+                    break;
+                case 'ArrowRight':
+                    direction = 'right';
+                    break;
+            }
+            if (direction !== null) {
+                connection.invoke('MovePlayer', direction).catch(err => console.error(err.toString()));
+            }
         });
     </script>
 </body>
