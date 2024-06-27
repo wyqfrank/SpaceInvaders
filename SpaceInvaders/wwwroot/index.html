@@ -25,6 +25,7 @@
         <canvas id="drawingCanvas" width="720" height="720" style="background-color: black;"></canvas>
     </div>
     <script>
+
         const canvasWidth = 720;
         const canvasHeight = 720;
         // Create connection
@@ -34,20 +35,14 @@
         connection.start().then(() => {
         console.log("Connected to the hub");
         }).catch(err => console.error(err.toString()));
-        // Start connection
 
+        // Join server
         document.getElementById("submit").addEventListener("click", ()=>{
-            // const name = document.getElementById("input").value;
-            // connection.invoke("RegisterPlayer", name).catch(err => console.error(err.toString()));
+            const name = document.getElementById("input").value;
+            connection.invoke("RegisterUsername", name).catch(err => console.error(err.toString()));
             const partId = document.getElementById("party").value;
             console.log("Player joined the party with id", partId);
             connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
-        });
-        // Handle receiving player position
-        connection.on("ReceivePlayerPosition", (playerId, x, y) => {
-            context.clearRect(0,0, canvasWidth, canvasHeight);
-            context.fillStyle = '#FF5733'; // Orange color
-            context.fillRect(x, y, 50, 50);
         });
 
         connection.on("PlayerConnected", (connectionId) => {
@@ -65,18 +60,22 @@
 
         const canvas = document.getElementById('drawingCanvas');
         const context = canvas.getContext('2d');
+        connection.on("ReceivePlayerMove", function(x){
 
-        context.fillStyle = '#FF5733'; // Orange color
-        context.fillRect(0, 0, 50, 50); // Player size example
-        connection.on("ReceivePlayerMove", function(x, y){
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            // Draw player
 
-            console.log(x, y)
-            context.fillStyle = '#FF5733'; // Orange color
-            context.fillRect(x, y, 50, 50); // Player size example
+            // Clear canvas so it would not trace the previous position
+            context.clearRect(0, 0, canvas.width, canvas.height);   
+
+            // Deserialise json sent from backend
+            const data = JSON.parse(x);
+
+            // Draw every a rectangle for each player currently connected to the party
+            for(let i = 0; i < data.length; i++)
+            {
+                context.fillStyle = '#FF5733';
+                context.fillRect(data[i].x_pos, data[i].y_pos, 50, 50); 
+            }
         })
-
         document.addEventListener('keydown', function(event) {
             let direction = null;
             switch (event.key) {
