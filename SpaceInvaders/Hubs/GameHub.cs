@@ -87,6 +87,22 @@ namespace SpaceInvaders.Hubs
                 case "down":
                     y_pos += speed;
                     break;
+                case "left-up":
+                    x_pos -= speed;
+                    y_pos -= speed;
+                    break;
+                case "left-down":
+                    x_pos -= speed;
+                    y_pos += speed;
+                    break;
+                case "right-up":
+                    x_pos += speed;
+                    y_pos -= speed;
+                    break;
+                case "right-down":
+                    x_pos += speed;
+                    y_pos += speed;
+                    break;
                 default:
                     break;
             }
