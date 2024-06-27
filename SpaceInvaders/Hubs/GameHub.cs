@@ -87,7 +87,7 @@ namespace SpaceInvaders.Hubs
                 case "down":
                     y_pos += speed;
                     break;
-                case "left-up":
+                case "left-up": // smoother movement will implement soon
                     x_pos -= speed;
                     y_pos -= speed;
                     break;
