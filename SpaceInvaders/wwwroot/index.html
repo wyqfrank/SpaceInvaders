@@ -17,66 +17,146 @@
     </style>
 </head>
 <body>
-    <input type="name" value="enter name" id="input">
-    <input type="party id" value="enter party id" id="party">
-    <input type="button" value="Join server" id="submit">
+    <input type="name" placeholder="enter name" id="input">
+    <input type="party id" placeholder="enter party id" id="party">
+
+    <input type="radio" id="green" name="color" value="#00FF00" checked="true">
+    <label for="green">Green</label>
+    
+    <input type="radio" id="red" name="color" value="#FF0000">
+    <label for="red">Red</label>
+    
+    <input type="radio" id="blue" name="color" value="#0000FF">
+    <label for="blue">Blue</label>
+
+    <input type="button" value="Join server" id="JoinServer">
+    <input type="button" value="Leave party" id="LeaveServer">
+
+    
     <div class="container">
         <h1 class="display-4">SpaceInvaders</h1>
         <canvas id="drawingCanvas" width="720" height="720" style="background-color: black;"></canvas>
     </div>
     <script>
 
+        // Variable for storing current users connectionid (Identifier)
+        let currentConnectionId = null;
+
+        // Classes for helping render different objects on canvas
+        class Player{
+            constructor(x, y, connectionId, color)
+            {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+            }
+        }
+
+        class Bullet{
+            constructor()
+            {
+
+            }
+        }
+        
+        // Object for storing key (conncetionId, player Object)
+        const playerArray = {};
+        const BulletArray = [];
+
         const canvasWidth = 720;
         const canvasHeight = 720;
+
+        // Get canvas context
+        const canvas = document.getElementById('drawingCanvas');
+        const context = canvas.getContext('2d');
         // Create connection
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/connect")
             .build();
+
+        // Start connection
         connection.start().then(() => {
-        console.log("Connected to the hub");
+            // Set the connectionId 
+            currentConnectionId = connection.connectionId;
+            console.log("Connected to the hub");
         }).catch(err => console.error(err.toString()));
 
+
+        // Register addEventListner for button press from user
+        document.addEventListener('keydown',keyInputHandler);
+
+        //
+        document.getElementById("LeaveServer").addEventListener("click", ()=>{
+            console.log("Leave");
+            connection.invoke("LeaveGameRoom").catch((e)=>{console.error(e.toString())});
+        });
         // Join server
-        document.getElementById("submit").addEventListener("click", ()=>{
+        document.getElementById("JoinServer").addEventListener("click", ()=>{
+            const colours = document.getElementsByName('color');
+            let colour;
+            for(let i = 0; i < colours.length; i++)
+            {
+                if(colours[i].checked)
+                {
+                    colour = colours[i].value;
+                }
+            }
+
             const name = document.getElementById("input").value;
-            connection.invoke("RegisterUsername", name).catch(err => console.error(err.toString()));
+            connection.invoke("RegisterUser", name, colour).catch(err => console.error(err.toString()));
             const partId = document.getElementById("party").value;
-            console.log("Player joined the party with id", partId);
             connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
         });
-
+        
+        // Listen to server response
         connection.on("PlayerConnected", (connectionId) => {
             console.log(`Player connected: ${connectionId}`);
         });
-        connection.on("PlayerDisconnected", (connectionId) => {
-            console.log(`Player disconnected: ${connectionId}`);
-        });
+    
         connection.on("PlayerJoinedRoom", (connectionId) => {
             console.log(`Player joined room: ${connectionId}`);
         });
-        connection.on("PlayerLeftRoom", (connectionId) => {
+        connection.on("PlayerLeftParty", (connectionId) => {
             console.log(`Player left room: ${connectionId}`);
         });
+        connection.on("RecieveError", (e)=>{
+            console.log(e);
+        });
 
-        const canvas = document.getElementById('drawingCanvas');
-        const context = canvas.getContext('2d');
-        connection.on("ReceivePlayerMove", function(x){
-
-
-            // Clear canvas so it would not trace the previous position
-            context.clearRect(0, 0, canvas.width, canvas.height);   
-
-            // Deserialise json sent from backend
-            const data = JSON.parse(x);
-
-            // Draw every a rectangle for each player currently connected to the party
-            for(let i = 0; i < data.length; i++)
+        function updatePlayers()
+        {
+            connection.on("RecieveData", function(x)
             {
-                context.fillStyle = '#FF5733';
-                context.fillRect(data[i].x_pos, data[i].y_pos, 50, 50); 
-            }
-        })
-        document.addEventListener('keydown', function(event) {
+                //Clear canvas so it would not trace the previous position
+                // context.clearRect(0, 0, canvas.width, canvas.height);   
+                // Deserialise json sent from backend
+                const data = JSON.parse(x);
+                // Draw every a rectangle for each player currently connected to the party
+                for(let i = 0; i < data.length; i++)
+                {
+                    let x = data[i].x;
+                    let y = data[i].y;
+                    let connectionId = data[i].connectionId;
+                    let color = data[i].color;
+
+                    if(!playerArray[connectionId])
+                    {
+                        playerArray[connectionId] = new Player(x, y, connectionId, color);
+                    }
+                    else
+                    {
+                        updatePlayerPosition(connectionId, x, y);
+                    }
+                }
+            })
+
+            connection.on("PlayerDisconnected", (connectionId) => {
+                console.log("User disconnected");
+                delete playerArray[connectionId];
+            });
+        }
+
+        function keyInputHandler(event) {
             let direction = null;
             switch (event.key) {
                 case 'ArrowUp':
@@ -95,7 +175,35 @@
             if (direction !== null) {
                 connection.invoke('MovePlayer', direction).catch(err => console.error(err.toString()));
             }
-        });
+        }
+
+        function updatePlayerPosition(connectionId, x, y)
+        {
+            player = playerArray[connectionId];
+            player.y = y;
+            player.x = x;
+        }
+
+        // Function for drawing players with updated coordinates
+        function drawPlayers()
+        {
+            context.clearRect(0, 0, canvas.width, canvas.height);   
+            const playerIds = Object.keys(playerArray);
+            for (const id of playerIds)
+            {
+                context.fillStyle = playerArray[id].color;
+                context.fillRect(playerArray[id].x, playerArray[id].y, 50, 50);
+            }
+        }
+
+        // Begin gameloop
+        function gameloop()
+        {
+            updatePlayers();
+            drawPlayers();
+            requestAnimationFrame(gameloop);
+        }
+        requestAnimationFrame(gameloop);
     </script>
 </body>
 </html>

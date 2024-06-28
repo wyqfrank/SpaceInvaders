@@ -6,6 +6,28 @@ using Newtonsoft.Json;
 namespace SpaceInvaders.Hubs
 {
     // Class for encapsulating ..
+
+    public class Bullet
+    {
+        public int height = 16;
+        public int width = 2;
+        public bool used = false;
+        public int x;
+        public int y;
+        public int speed = 50;
+        public Bullet(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+        public void shoot()
+        {
+            while(y <= 0)
+            {
+                y-= speed;
+            }
+        }
+    }
     public class GameParty
     {   
         public List<Player> players = new List<Player>();
@@ -14,22 +36,31 @@ namespace SpaceInvaders.Hubs
         {
             this.partyId = partyId;
         }
-
+        public bool playerExists(string connectionId)
+        {
+            foreach(Player p in players)
+            {
+                if(p.connectionId == connectionId)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public override string ToString()
         {
             return $"Party id: {partyId}";
         }
-
     }
     public class Game
     {
+        // HashMap for storing players for O(1) retrieval
         public Dictionary<string, Player> players = new Dictionary<string, Player>(); 
         public Dictionary<string, GameParty> groups = new Dictionary<string, GameParty>();
         public void MovePlayer(string connectionId, string direction)
         {
             players[connectionId].move_player(direction);
         }
-
         public void PrintInfo()
         {
             foreach (var player in players.Values)
@@ -49,43 +80,53 @@ namespace SpaceInvaders.Hubs
         {
             return players.Values.ToList();
         }
-
         public List<Player> GetPlayersInParty(string partyId)
         {
             return groups[partyId].players;
         }
-    
     }
     public class Player
     {
-        public string partyId;
+        public List<Bullet> bullets = new();
+        public int BoardWidth = 720;
+        public int BoardHeight = 720;
+        public string ? partyId = null;
         public string color = string.Empty;
         public string connectionId = string.Empty;
         public string name;
         public int score;
-        public int x_pos;
-        public int y_pos;
+        public int x;
+        public int y;
         public int speed = 10;
-        public Player(string connectionId, string name = "default", int x = 310, int y = -310)
+        public Player(string connectionId, string name = "default", int x = 320, int y = 320)
         {
             this.connectionId = connectionId;
             this.name = name;
+            this.x = x;
+            this.y = y;
+        }
+
+        public void shoot()
+        {
+            Bullet bullet = new Bullet(x, y);
+            bullets.Add(bullet);
         }
         public void move_player(string direction)
         {
             switch(direction)
             {
                 case "left":
-                    x_pos -= speed;
+
+                    x -= speed;
                     break;
                 case "right":
-                    x_pos += speed;
+                    x += speed;
                     break;
                 case "up":
-                    y_pos -= speed;
+                    y -= speed;
                     break;
                 case "down":
-                    y_pos += speed;
+                    y += speed;
                     break;
                 case "left-up": // smoother movement will implement soon
                     x_pos -= speed;
@@ -106,11 +147,8 @@ namespace SpaceInvaders.Hubs
                 default:
                     break;
             }
-
         }
     }
-
-
     public interface IGameClient{
         Task PlayerJoinedRoom(string playerId);
     }
@@ -119,7 +157,6 @@ namespace SpaceInvaders.Hubs
         // Have to make static cuz everytime client uses hub function class is reset,
         // use Dictionary to store key pair (connection id and player) as Dictionary has O(1) time complexity for inserting and fetching data
         public Game game;
-
         // Use singleton class as basis for storing data, use SQL for persistent data storage
         public GameHub(Game game)
         {
@@ -127,8 +164,6 @@ namespace SpaceInvaders.Hubs
         }
         public override async Task OnConnectedAsync()
         {
-
-
             string connectionId = Context.ConnectionId;
             // Add the player the storage
             game.players.Add(connectionId, new Player(connectionId));
@@ -140,22 +175,44 @@ namespace SpaceInvaders.Hubs
         {
             // Get the current player by accessing the dictionary
             Player currentPlayer = game.FindPlayer(Context.ConnectionId);
+            if(string.IsNullOrEmpty(currentPlayer.partyId))
+            {
+                await SendErrorMessage("Party id cannot be empty");
+                return;
+            }
             // Check if party exists
             if(game.PartyExists(currentPlayer.partyId))
             {
                 // Move player
                 currentPlayer.move_player(direction);
-
                 // Send a serialised json containing the coordinates of the player
-                await Clients.Group(currentPlayer.partyId).SendAsync("ReceivePlayerMove", JsonConvert.SerializeObject(game.GetPlayersInParty(currentPlayer.partyId)));
+                await SendData(currentPlayer.partyId);
                 // game.GetPlayersInParty(currentPlayer.partyId)
             }
         }
+        // public async Task UpdateBullets()
+        // {
+        //     Player currentPlayer = game.FindPlayer(Context.ConnectionId);
+
+        //     if(currentPlayer.bullets.Count != 0)
+        //     {
+        //         foreach(var bullet in currentPlayer.bullets)
+        //         {
+
+        //         }
+        //     }
+        //     await Clients.Group(currentPlayer.partyId).SendAsync("ReceivePlayerMove", JsonConvert.SerializeObject(game.GetPlayersInParty(currentPlayer.partyId)));
+        // }
+
         // Joining a specific game room
         public async Task JoinGameRoom(string partyId)
         {   
+            if(string.IsNullOrEmpty(partyId))
+            {
+                await SendErrorMessage("Party id cannot be empty");
+                return;
+            }
             Player currentPlayer = game.FindPlayer(Context.ConnectionId);
-
             if(!game.PartyExists(partyId))
             {
                 GameParty gameGroup = new GameParty(partyId); 
@@ -165,20 +222,49 @@ namespace SpaceInvaders.Hubs
             }
             else
             {
-                currentPlayer.partyId = partyId;
-                game.groups[partyId].players.Add(currentPlayer);
+                if(!game.groups[partyId].playerExists(currentPlayer.connectionId))
+                {
+                    currentPlayer.partyId = partyId;
+                    game.groups[partyId].players.Add(currentPlayer);
+                }
             }
             await Groups.AddToGroupAsync(Context.ConnectionId, partyId);
             await Clients.Group(partyId).SendAsync("PlayerJoinedRoom", Context.ConnectionId);
+            await SendData(partyId);
+        }
+
+        public async Task SendData(string partyId)
+        {
+            await Clients.Group(partyId).SendAsync("RecieveData", JsonConvert.SerializeObject(game.GetPlayersInParty(partyId)));
+        }
+        // Method for handling error
+        public async Task SendErrorMessage(string message)
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("RecieveError", message);
         }
         // Leaving a specific game room
-        public async Task LeaveGameRoom(string roomId)
+        public async Task LeaveGameRoom()
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-            await Clients.Group(roomId).SendAsync("PlayerLeftRoom", Context.ConnectionId);
+
+            Player currentPlayer = game.FindPlayer(Context.ConnectionId);
+
+            if(currentPlayer.partyId != null)
+            {
+                game.groups[currentPlayer.partyId].players.Remove(currentPlayer);
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentPlayer.partyId);
+                await Clients.Group(currentPlayer.partyId).SendAsync("PlayerLeftParty", Context.ConnectionId);
+            }
+            else
+            {
+                string message = $"Player with id: {currentPlayer.connectionId} has not joined a room";
+                await SendErrorMessage(message);
+            }
         }
-        public async Task RegisterUsername(string name)
+        public async Task RegisterUser(string name, string colour)
         {
+            Player currentPlayer = game.FindPlayer(Context.ConnectionId);
+            currentPlayer.color = colour;
+            currentPlayer.name = name;
             await Clients.Client(Context.ConnectionId).SendAsync("RecievedName", name);
         }
     }
