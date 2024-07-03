@@ -2,8 +2,8 @@
 {
     public abstract class Entity
     {
-        private int[,] position;
-        private int health;
+        public int[,] position;
+        public int health;
 
         public Entity(int[,] position, int health) 
         {
