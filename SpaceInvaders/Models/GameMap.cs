@@ -2,10 +2,14 @@
 {
     public class GameMap
     {
-        private char[,] mapLayout { get; }
+        private char[,] mapLayout;
+
+        private Player[] players ;
+
+        private Mob[] mobs;
         public GameMap(Player[] players, Mob[] Mobs) 
         {
-
+            
         }
 
         public char[,] GetMapLayout()

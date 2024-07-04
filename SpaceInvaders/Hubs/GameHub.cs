@@ -9,18 +9,23 @@ namespace SpaceInvaders.Hubs
 
     public class Bullet
     {
-        public string id;
         public int height = 16;
         public int width = 2;
         public bool used = false;
         public int x;
         public int y;
         public int speed = 50;
-        public Bullet(int x, int y, string id)
+        public Bullet(int x, int y)
         {
             this.x = x;
             this.y = y;
-            this.id = id;
+        }
+        public void shoot()
+        {
+            while(y <= 0)
+            {
+                y-= speed;
+            }
         }
     }
     public class GameParty
@@ -63,16 +68,6 @@ namespace SpaceInvaders.Hubs
                 Console.WriteLine(player.connectionId);
             }
         }
-
-        public List<Bullet> getAllBulletObjects(string partyId)
-        {
-            List<Bullet> allBulletObjects = new List<Bullet>();
-            foreach(var player in GetPlayersInParty(partyId))
-            {
-                allBulletObjects.AddRange(player.bullets);
-            }
-            return allBulletObjects;
-        }
         public Player FindPlayer(string connectionId)
         {
             return players[connectionId];
@@ -92,7 +87,7 @@ namespace SpaceInvaders.Hubs
     }
     public class Player
     {
-        public Queue<Bullet> bullets = new();
+        public List<Bullet> bullets = new();
         public int BoardWidth = 720;
         public int BoardHeight = 720;
         public string ? partyId = null;
@@ -110,15 +105,18 @@ namespace SpaceInvaders.Hubs
             this.x = x;
             this.y = y;
         }
-        public void DequeueBullets()
+
+        public void shoot()
         {
-            bullets.Dequeue();
+            Bullet bullet = new Bullet(x, y);
+            bullets.Add(bullet);
         }
         public void move_player(string direction)
         {
             switch(direction)
             {
                 case "left":
+
                     x -= speed;
                     break;
                 case "right":
@@ -129,6 +127,22 @@ namespace SpaceInvaders.Hubs
                     break;
                 case "down":
                     y += speed;
+                    break;
+                case "left-up": // smoother movement will implement soon
+                    x_pos -= speed;
+                    y_pos -= speed;
+                    break;
+                case "left-down":
+                    x_pos -= speed;
+                    y_pos += speed;
+                    break;
+                case "right-up":
+                    x_pos += speed;
+                    y_pos -= speed;
+                    break;
+                case "right-down":
+                    x_pos += speed;
+                    y_pos += speed;
                     break;
                 default:
                     break;
@@ -176,35 +190,6 @@ namespace SpaceInvaders.Hubs
                 // game.GetPlayersInParty(currentPlayer.partyId)
             }
         }
-        public async Task UpdateBulletData()
-        {
-            Player currentPlayer = game.FindPlayer(Context.ConnectionId);
-            if(currentPlayer.partyId != null)
-            {
-                Console.WriteLine("Update bullet");
-                await Clients.Group(currentPlayer.partyId).SendAsync("RecieveBulletData", JsonConvert.SerializeObject(game.getAllBulletObjects(currentPlayer.partyId)));
-            }
-        }
-        public async Task Shoot()
-        {
-            Player currentPlayer = game.FindPlayer(Context.ConnectionId);
-            if(game.PartyExists(currentPlayer.partyId))
-            {
-                string newId = Guid.NewGuid().ToString();
-                Bullet bullet = new(currentPlayer.x, currentPlayer.y, newId);
-                if(currentPlayer.bullets.Count > 0)
-                {
-                    currentPlayer.bullets.Dequeue();
-                }
-                currentPlayer.bullets.Enqueue(bullet);
-                await UpdateBulletData();
-            }
-            else
-            {
-                await SendErrorMessage("Please join a party first");
-            }
-        }
-
         // Joining a specific game room
         public async Task JoinGameRoom(string partyId)
         {   
@@ -233,6 +218,7 @@ namespace SpaceInvaders.Hubs
             await Clients.Group(partyId).SendAsync("PlayerJoinedRoom", Context.ConnectionId);
             await SendData(partyId);
         }
+
         public async Task SendData(string partyId)
         {
             await Clients.Group(partyId).SendAsync("RecieveData", JsonConvert.SerializeObject(game.GetPlayersInParty(partyId)));
@@ -245,6 +231,7 @@ namespace SpaceInvaders.Hubs
         // Leaving a specific game room
         public async Task LeaveGameRoom()
         {
+
             Player currentPlayer = game.FindPlayer(Context.ConnectionId);
 
             if(currentPlayer.partyId != null)
