@@ -10,7 +10,6 @@
             this.position = position;
             this.health = health;
         }
-
         public int[,] getPosition()
         {
             return this.position;
