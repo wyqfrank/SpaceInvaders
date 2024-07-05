@@ -43,18 +43,19 @@
             connection.invoke("sendMap");
         console.log("Connected to the hub");
         }).catch(err => console.error(err.toString()));
+
         const mapLayout = [];
 
-        connection.on("ReceiveMapData",
-        function (data) {
+        connection.on("ReceiveMapData", function (data) {
+            // Parse Data
             const parsedData = JSON.parse(data)
+            // Populate mayLayout with data
             for (let i = 0; i < parsedData.length; i++) {
                 mapLayout.push(parsedData[i])
             }
+            // Only render game map when mayLayout is initalised
             renderGameMap();
         });
-
-
         function renderGameMap() {
             for (let y = 0; y < mapLayout.length; y++) {
                 for (let x = 0; x < mapLayout[y].length; x++) {
@@ -63,6 +64,7 @@
                 }
             }
         }
+
 
         // // Join server
         // document.getElementById("submit").addEventListener("click", ()=>{

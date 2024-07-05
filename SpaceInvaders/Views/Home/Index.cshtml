@@ -44,46 +44,28 @@
         console.log("Connected to the hub");
         }).catch(err => console.error(err.toString()));
 
-
         const mapLayout = [];
 
-        connection.on("ReceiveMapData", 
-        function (data) {
+        connection.on("ReceiveMapData", function (data) {
+            // Parse Data
             const parsedData = JSON.parse(data)
-            console.log(parsedData);
+            // Populate mayLayout with data
             for (let i = 0; i < parsedData.length; i++) {
                 mapLayout.push(parsedData[i])
             }
-            console.log(mapLayout);
+            // Only render game map when mayLayout is initalised
+            renderGameMap();
         });
-
-
-        function renderGameMap(context) {
-            console.log(mapLayout);
-            @* for (let x = 0; y < mapLayout[y].length; y++) {
-                for (let x = 0; x < mapLayout[x].length; x++) {
-                    let entity = mapLayout[y][x];
-                    context.fillStyle = "#00FF00";
-                    context.fillRect(x, y, x * 10, y * 10);
-                }
-            } *@
+        function renderGameMap() {
             for (let y = 0; y < mapLayout.length; y++) {
                 for (let x = 0; x < mapLayout[y].length; x++) {
-                    console.log()
-                    context.fillStyle = "#00FF00";
-                    
-                    context.fillRect(x, y, x * 10, y * 10);
+                context.fillStyle = "#00FF00";
+                context.fillRect(x, y, x * 10, y * 10);
                 }
             }
         }
 
-        for (let y = 0; y < mapLayout.length; y++) {
-            for (let x = 0; x < mapLayout[y].length; x++) {
-                context.fillStyle = "#00FF00";
-                
-                context.fillRect(x, y, x * 10, y * 10);
-            }
-        }        
+
         // // Join server
         // document.getElementById("submit").addEventListener("click", ()=>{
         //     const name = document.getElementById("input").value;
