@@ -2,11 +2,12 @@ using Microsoft.AspNetCore.SignalR;
 using Interfaces;
 using System.ComponentModel;
 using Newtonsoft.Json;
+using SpaceInvaders.Models;
 
 namespace SpaceInvaders.Hubs
 {
     // Class for encapsulating ..
-
+    
     public class Bullet
     {
         public int height = 16;
@@ -142,9 +143,13 @@ namespace SpaceInvaders.Hubs
         // use Dictionary to store key pair (connection id and player) as Dictionary has O(1) time complexity for inserting and fetching data
         public Game game;
         // Use singleton class as basis for storing data, use SQL for persistent data storage
+
+        public static GameMap gameMap = new (50,50);
+
         public GameHub(Game game)
         {
             this.game = game;
+
         }
         public override async Task OnConnectedAsync()
         {
@@ -250,6 +255,11 @@ namespace SpaceInvaders.Hubs
             currentPlayer.color = colour;
             currentPlayer.name = name;
             await Clients.Client(Context.ConnectionId).SendAsync("RecievedName", name);
+        }
+
+        public async Task SendMap()
+        {
+            await Clients.All.SendAsync("ReceiveMapData",JsonConvert.SerializeObject(gameMap.GetMapLayout()));
         }
     }
 }
