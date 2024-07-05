@@ -17,14 +17,21 @@
     </style>
 </head>
 <body>
+    <canvas id="gameCanvas">
+
+    </canvas>
     <input type="name" value="enter name" id="input">
     <input type="party id" value="enter party id" id="party">
     <input type="button" value="Join server" id="submit">
     <div class="container">
-        <h1 class="display-4">SpaceInvaders</h1>
+        <h1 class="display-4">Space Invaders</h1>
         <canvas id="drawingCanvas" width="720" height="720" style="background-color: black;"></canvas>
     </div>
+
     <script>
+        const canvas = document.getElementById("drawingCanvas");
+        const context = canvas.getContext('2d');
+
 
         const canvasWidth = 720;
         const canvasHeight = 720;
@@ -33,69 +40,99 @@
             .withUrl("/connect")
             .build();
         connection.start().then(() => {
+            connection.invoke("sendMap");
         console.log("Connected to the hub");
         }).catch(err => console.error(err.toString()));
 
-        // Join server
-        document.getElementById("submit").addEventListener("click", ()=>{
-            const name = document.getElementById("input").value;
-            connection.invoke("RegisterUsername", name).catch(err => console.error(err.toString()));
-            const partId = document.getElementById("party").value;
-            console.log("Player joined the party with id", partId);
-            connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
-        });
 
-        connection.on("PlayerConnected", (connectionId) => {
-            console.log(`Player connected: ${connectionId}`);
-        });
-        connection.on("PlayerDisconnected", (connectionId) => {
-            console.log(`Player disconnected: ${connectionId}`);
-        });
-        connection.on("PlayerJoinedRoom", (connectionId) => {
-            console.log(`Player joined room: ${connectionId}`);
-        });
-        connection.on("PlayerLeftRoom", (connectionId) => {
-            console.log(`Player left room: ${connectionId}`);
-        });
+        const mapLayout = [];
 
-        const canvas = document.getElementById('drawingCanvas');
-        const context = canvas.getContext('2d');
-        connection.on("ReceivePlayerMove", function(x){
-
-
-            // Clear canvas so it would not trace the previous position
-            context.clearRect(0, 0, canvas.width, canvas.height);   
-
-            // Deserialise json sent from backend
-            const data = JSON.parse(x);
-
-            // Draw every a rectangle for each player currently connected to the party
-            for(let i = 0; i < data.length; i++)
-            {
-                context.fillStyle = '#FF5733';
-                context.fillRect(data[i].x_pos, data[i].y_pos, 50, 50); 
+        connection.on("ReceiveMapData", 
+        function (data) {
+            const parsedData = JSON.parse(data)
+            
+            for (let i = 0; i < parsedData.length; i++) {
+                console.log(parsedData[i])
+                mapLayout.push(parsedData[i])
             }
-        })
-        document.addEventListener('keydown', function(event) {
-            let direction = null;
-            switch (event.key) {
-                case 'ArrowUp':
-                    direction = 'up';
-                    break;
-                case 'ArrowDown':
-                    direction = 'down';
-                    break;
-                case 'ArrowLeft':
-                    direction = 'left';
-                    break;
-                case 'ArrowRight':
-                    direction = 'right';
-                    break;
+            console.log(mapLayout);
+        } 
+        );
+
+        function renderGameMap(context) {
+            console.log(mapLayout);
+            for (let y = 0; y < mapLayout[y].length; y++) {
+                for (let x = 0; x < mapLayout[x].length; x++) {
+                    let entity = mapLayout[y][x];
+                    context.fillStyle = "#00FF00";
+                    context.fillRect(x, y, x * 10, y * 10);
+                }
             }
-            if (direction !== null) {
-                connection.invoke('MovePlayer', direction).catch(err => console.error(err.toString()));
-            }
-        });
+        }
+
+        renderGameMap(context)
+
+        
+        // // Join server
+        // document.getElementById("submit").addEventListener("click", ()=>{
+        //     const name = document.getElementById("input").value;
+        //     connection.invoke("RegisterUsername", name).catch(err => console.error(err.toString()));
+        //     const partId = document.getElementById("party").value;
+        //     console.log("Player joined the party with id", partId);
+        //     connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
+        // });
+
+        // connection.on("PlayerConnected", (connectionId) => {
+        //     console.log(`Player connected: ${connectionId}`);
+        // });
+        // connection.on("PlayerDisconnected", (connectionId) => {
+        //     console.log(`Player disconnected: ${connectionId}`);
+        // });
+        // connection.on("PlayerJoinedRoom", (connectionId) => {
+        //     console.log(`Player joined room: ${connectionId}`);
+        // });
+        // connection.on("PlayerLeftRoom", (connectionId) => {
+        //     console.log(`Player left room: ${connectionId}`);
+        // });
+
+        // const canvas = document.getElementById('drawingCanvas');
+        // const context = canvas.getContext('2d');
+        // connection.on("ReceivePlayerMove", function(x){
+
+
+        //     // Clear canvas so it would not trace the previous position
+        //     context.clearRect(0, 0, canvas.width, canvas.height);   
+
+        //     // Deserialise json sent from backend
+        //     const data = JSON.parse(x);
+
+        //     // Draw every a rectangle for each player currently connected to the party
+        //     for(let i = 0; i < data.length; i++)
+        //     {
+        //         context.fillStyle = '#FF5733';
+        //         context.fillRect(data[i].x_pos, data[i].y_pos, 50, 50); 
+        //     }
+        // })
+        // document.addEventListener('keydown', function(event) {
+        //     let direction = null;
+        //     switch (event.key) {
+        //         case 'ArrowUp':
+        //             direction = 'up';
+        //             break;
+        //         case 'ArrowDown':
+        //             direction = 'down';
+        //             break;
+        //         case 'ArrowLeft':
+        //             direction = 'left';
+        //             break;
+        //         case 'ArrowRight':
+        //             direction = 'right';
+        //             break;
+        //     }
+        //     if (direction !== null) {
+        //         connection.invoke('MovePlayer', direction).catch(err => console.error(err.toString()));
+        //     }
+    
     </script>
 </body>
 </html>

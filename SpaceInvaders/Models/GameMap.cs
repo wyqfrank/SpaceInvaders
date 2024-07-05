@@ -5,7 +5,7 @@
         private char[][] mapLayout { get; }
 
 
-        public GameMap(Player[] players, Mob[] Mobs, int width, int height) {
+        public GameMap(int width, int height) {
             mapLayout = new char[height][];
             for (int i = 0; i < height; i++)
             {
