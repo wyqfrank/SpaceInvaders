@@ -51,14 +51,13 @@
         });
 
         function renderGameMap() {
-
-            // canvas.width = mapLayout.length * 10;
-            // canvas.height = mapLayout.length * 10;
-        
-            for (let y = 0; y < mapLayout[y].length; y++) {
+            canvas.width = mapLayout.length * 10;
+            canvas.height = mapLayout.length * 10;
+            console.log("hellow")
+            for (let y = 0; y < mapLayout[0].length; y++) {
                 for (let x = 0; x < mapLayout.length; x++) {
-                context.fillStyle = "#00FF00";
-                context.fillRect(x, y, x * 10, y * 10);
+                    context.fillStyle = "#000000";
+                    context.fillRect(x, y, x * 10, y * 10);
                 }
             }
             // context.fillStyle = "#00FF00";

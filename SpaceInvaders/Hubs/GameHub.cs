@@ -134,9 +134,6 @@ namespace SpaceInvaders.Hubs
             }
         }
     }
-    public interface IGameClient{
-        Task PlayerJoinedRoom(string playerId);
-    }
     public class GameHub : Hub
     {
         // Have to make static cuz everytime client uses hub function class is reset,
@@ -180,21 +177,6 @@ namespace SpaceInvaders.Hubs
                 // game.GetPlayersInParty(currentPlayer.partyId)
             }
         }
-        // public async Task UpdateBullets()
-        // {
-        //     Player currentPlayer = game.FindPlayer(Context.ConnectionId);
-
-        //     if(currentPlayer.bullets.Count != 0)
-        //     {
-        //         foreach(var bullet in currentPlayer.bullets)
-        //         {
-
-        //         }
-        //     }
-        //     await Clients.Group(currentPlayer.partyId).SendAsync("ReceivePlayerMove", JsonConvert.SerializeObject(game.GetPlayersInParty(currentPlayer.partyId)));
-        // }
-
-        // Joining a specific game room
         public async Task JoinGameRoom(string partyId)
         {   
             if(string.IsNullOrEmpty(partyId))
