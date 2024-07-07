@@ -157,6 +157,7 @@ namespace SpaceInvaders.Hubs
             // Add the player the storage
             game.players.Add(connectionId, new Player(connectionId));
             await Groups.AddToGroupAsync(connectionId, "Players");
+            await SendMap();
             await Clients.Group("Players").SendAsync("PlayerConnected", connectionId);
         }
         // Method for moving player given direction from user input

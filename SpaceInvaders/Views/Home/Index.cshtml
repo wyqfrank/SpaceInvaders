@@ -17,35 +17,28 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas">
-
-    </canvas>
     <input type="name" value="enter name" id="input">
     <input type="party id" value="enter party id" id="party">
     <input type="button" value="Join server" id="submit">
     <div class="container">
         <h1 class="display-4">Space Invaders</h1>
-        <canvas id="drawingCanvas" width="720" height="720" style="background-color: black;"></canvas>
+        <canvas id="drawingCanvas"></canvas>
     </div>
 
     <script>
         const canvas = document.getElementById("drawingCanvas");
         const context = canvas.getContext('2d');
-
-
-        const canvasWidth = 720;
-        const canvasHeight = 720;
-        // Create connection
+        // Create connec
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/connect")
             .build();
+
         connection.start().then(() => {
-            connection.invoke("sendMap");
-        console.log("Connected to the hub");
+            console.log("Connected to the hub");
         }).catch(err => console.error(err.toString()));
 
         const mapLayout = [];
-
+    
         connection.on("ReceiveMapData", function (data) {
             // Parse Data
             const parsedData = JSON.parse(data)
@@ -56,15 +49,21 @@
             // Only render game map when mayLayout is initalised
             renderGameMap();
         });
-        function renderGameMap() {
-            for (let y = 0; y < mapLayout.length; y++) {
-                for (let x = 0; x < mapLayout[y].length; x++) {
-                context.fillStyle = "#00FF00";
-                context.fillRect(x, y, x * 10, y * 10);
-                }
-            }
-        }
 
+        function renderGameMap() {
+
+            canvas.width = mapLayout.length * 10;
+            canvas.height = mapLayout.length * 10;
+        
+            // for (let y = 0; y < mapLayout.length; y++) {
+            //     for (let x = 0; x < mapLayout[y].length; x++) {
+            //     context.fillStyle = "#00FF00";
+            //     context.fillRect(x, y, x * 10, y * 10);
+            //     }
+            // }
+            context.fillStyle = "#00FF00";
+            context.fillRect(0, 0, canvas.width,canvas.height);
+        }
 
         // // Join server
         // document.getElementById("submit").addEventListener("click", ()=>{
