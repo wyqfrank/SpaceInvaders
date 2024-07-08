@@ -17,11 +17,11 @@
     </style>
 </head>
 <body>
-    <input type="name" value="enter name" id="input">
+    <!-- <input type="name" value="enter name" id="input">
     <input type="party id" value="enter party id" id="party">
-    <input type="button" value="Join server" id="submit">
+    <input type="button" value="Join server" id="submit"> -->
     <div class="container">
-        <h1 class="display-4">Space Invaders</h1>
+        <!-- <h1 class="display-4">Space Invaders</h1> -->
         <canvas id="drawingCanvas"></canvas>
     </div>
 
@@ -37,32 +37,51 @@
             console.log("Connected to the hub");
         }).catch(err => console.error(err.toString()));
 
-        const mapLayout = [];
-    
-        connection.on("ReceiveMapData", function (data) {
-            // Parse Data
-            const parsedData = JSON.parse(data)
-            // Populate mayLayout with data
-            for (let i = 0; i < parsedData.length; i++) {
-                mapLayout.push(parsedData[i])
-            }
-            // Only render game map when mayLayout is initalised
-            renderGameMap();
-        });
 
-        function renderGameMap() {
-            canvas.width = mapLayout.length * 10;
-            canvas.height = mapLayout.length * 10;
-            console.log("hellow")
-            for (let y = 0; y < mapLayout[0].length; y++) {
-                for (let x = 0; x < mapLayout.length; x++) {
-                    context.fillStyle = "#000000";
-                    context.fillRect(x, y, x * 10, y * 10);
-                }
+        const players = {}
+
+        // const mapLayout = [];
+        
+        connection.on("RecieveData", function(data){
+            const parsedData = JSON.parse(data);
+
+            console.log(parsedData);
+
+            for(let i =0; i < parsedData.length; i++)
+            {
+            
             }
-            // context.fillStyle = "#00FF00";
-            // context.fillRect(0, 0, canvas.width,canvas.height);
-        }
+        })
+
+
+        connection.on("UpdateData", function(x)
+    {
+        console.log("h");
+    })
+        // connection.on("ReceiveMapData", function (data) {
+        //     // Parse Data
+        //     const parsedData = JSON.parse(data)
+        //     // Populate mayLayout with data
+        //     for (let i = 0; i < parsedData.length; i++) {
+        //         mapLayout.push(parsedData[i])
+        //     }
+        //     // Only render game map when mayLayout is initalised
+        //     renderGameMap();
+        // });
+
+        // function renderGameMap() {
+        //     canvas.width = mapLayout.length * 10;
+        //     canvas.height = mapLayout.length * 10;
+        //     console.log("hellow")
+        //     for (let y = 0; y < mapLayout[0].length; y++) {
+        //         for (let x = 0; x < mapLayout.length; x++) {
+        //             context.fillStyle = "#000000";
+        //             context.fillRect(x, y, x * 10, y * 10);
+        //         }
+        //     }
+        //     // context.fillStyle = "#00FF00";
+        //     // context.fillRect(0, 0, canvas.width,canvas.height);
+        // }
 
         // // Join server
         // document.getElementById("submit").addEventListener("click", ()=>{
@@ -73,18 +92,13 @@
         //     connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
         // });
 
-        // connection.on("PlayerConnected", (connectionId) => {
-        //     console.log(`Player connected: ${connectionId}`);
-        // });
-        // connection.on("PlayerDisconnected", (connectionId) => {
-        //     console.log(`Player disconnected: ${connectionId}`);
-        // });
-        // connection.on("PlayerJoinedRoom", (connectionId) => {
-        //     console.log(`Player joined room: ${connectionId}`);
-        // });
-        // connection.on("PlayerLeftRoom", (connectionId) => {
-        //     console.log(`Player left room: ${connectionId}`);
-        // });
+        connection.on("PlayerConnected", (width, height) => {
+            canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+            context.fillStyle = "#000000";
+            context.fillRect(0, 0, canvas.width,canvas.height);
+        });
 
         // const canvas = document.getElementById('drawingCanvas');
         // const context = canvas.getContext('2d');

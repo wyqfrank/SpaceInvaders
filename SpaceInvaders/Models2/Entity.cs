@@ -1,10 +1,14 @@
-namespace api.Models
+using System.Collections;
+
+namespace SpaceInvaders.Models2
 {
     public abstract class Entity
     {
-        private int x;
-        private int y;
-        private int speed;
+        protected int x;
+        protected int y;
+        public int X => x;
+        public int Y => y;
+        public int speed;
         public Entity(int x = 0, int y = 0, int speed = 10)
         {
             this.x = x;
@@ -18,6 +22,24 @@ namespace api.Models
         public Player(string connectionId, int x, int y, int speed) : base(x, y, speed)
         {
             this.connectionId = connectionId;
+        }
+        public void MovePlayer(string input)
+        {
+            switch(input)
+            {
+                case "w":
+                    y+=speed;
+                    break;
+                case "s":
+                    y+=speed;
+                    break;
+                case "a":
+                    x-=speed;
+                    break;
+                case "d":
+                    x+=speed;
+                    break;
+            }
         }
     }
     public class Mob : Entity
