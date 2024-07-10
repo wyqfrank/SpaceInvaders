@@ -2,14 +2,14 @@
 {
     public class Position(int x, int y)
     {
-        public int x { get; set; } = x;
-        public int y { get; set; } = y;
+        private int x { get; set; } = x;
+        private int y { get; set; } = y;
 
-        public (int, int) ToTuple()
+        public (int, int) ToTuple() // getter
         {
             return (x, y);
         }
-        public static Position FromTuple((int, int) tuple)
+        public static Position FromTuple((int, int) tuple) // setter
         {
             return new Position(tuple.Item1, tuple.Item2);
         }

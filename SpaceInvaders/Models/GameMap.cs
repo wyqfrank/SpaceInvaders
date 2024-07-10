@@ -2,24 +2,24 @@
 {
     public class GameMap
     {
-        private Dictionary<Entity, Tuple<int, int>>[,] MapLayout { get; }
+        private Dictionary<Entity, Position>[,] MapLayout { get; }
 
 
         public GameMap(int width, int height)
         {
-            MapLayout = new Dictionary<Entity, Tuple<int, int>>[height, width];
+            MapLayout = new Dictionary<Entity, Position>[height, width];
 
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
                 {
-                    MapLayout[i, j] = new Dictionary<Entity, Tuple<int, int>>();
+                    MapLayout[i, j] = new Dictionary<Entity, Position>();
                 }
             }
 
         }
 
-        public Dictionary<Entity, Tuple<int, int>>[,] GetMapLayout()
+        public Dictionary<Entity, Position>[,] GetMapLayout()
         {
             return MapLayout;
         }
@@ -30,7 +30,7 @@
             {
                 if (x >= 0 && x < MapLayout.GetLength(1) && y >= 0 && y < MapLayout.GetLength(0))
                 {
-                    MapLayout[y, x].Add(entity, Tuple.Create(x, y));
+                    MapLayout[y, x].Add(entity, Position.FromTuple((x,y)));
                 }
                 else
                 {
