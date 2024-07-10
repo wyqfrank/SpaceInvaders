@@ -22,122 +22,135 @@
     <input type="button" value="Join server" id="submit"> -->
     <div class="container">
         <!-- <h1 class="display-4">Space Invaders</h1> -->
-        <canvas id="drawingCanvas"></canvas>
+        <canvas id="drawingCanvas" style="background-color: black;"></canvas>
     </div>
 
     <script>
-        const canvas = document.getElementById("drawingCanvas");
-        const context = canvas.getContext('2d');
-        // Create connec
+
+        const keys = {
+            w: false,
+            a: false,
+            s: false,
+            d: false
+        };
+        
+
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/connect")
+            .configureLogging(signalR.LogLevel.Information)
             .build();
 
-        connection.start().then(() => {
-            console.log("Connected to the hub");
-        }).catch(err => console.error(err.toString()));
+        connection.start().then(function () {
+            console.log("SignalR Connected.");
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
 
-
+        const canvas = document.getElementById("drawingCanvas");
+        const context = canvas.getContext('2d');
         const players = {}
-
-        // const mapLayout = [];
         
-        connection.on("RecieveData", function(data){
-            const parsedData = JSON.parse(data);
 
-            console.log(parsedData);
-
-            for(let i =0; i < parsedData.length; i++)
+        
+        
+        connection.on("RecieveData", function(backendPlayers){
+            const data = JSON.parse(backendPlayers);
+            console.log(data);
+            for(const id in data)
             {
-            
+                const backendPlayer = data[id];
+                if (!players[id]) {
+                    players[id] = new Player(backendPlayer.x, backendPlayer.y, id, "#00FF00")
+                }
+                else
+                {
+                    players[id].x = backendPlayer.x;
+                    players[id].y = backendPlayer.y;
+                }
             }
+
+            console.log(players);
         })
-
-
-        connection.on("UpdateData", function(x)
-    {
-        console.log("h");
-    })
-        // connection.on("ReceiveMapData", function (data) {
-        //     // Parse Data
-        //     const parsedData = JSON.parse(data)
-        //     // Populate mayLayout with data
-        //     for (let i = 0; i < parsedData.length; i++) {
-        //         mapLayout.push(parsedData[i])
-        //     }
-        //     // Only render game map when mayLayout is initalised
-        //     renderGameMap();
-        // });
-
-        // function renderGameMap() {
-        //     canvas.width = mapLayout.length * 10;
-        //     canvas.height = mapLayout.length * 10;
-        //     console.log("hellow")
-        //     for (let y = 0; y < mapLayout[0].length; y++) {
-        //         for (let x = 0; x < mapLayout.length; x++) {
-        //             context.fillStyle = "#000000";
-        //             context.fillRect(x, y, x * 10, y * 10);
-        //         }
-        //     }
-        //     // context.fillStyle = "#00FF00";
-        //     // context.fillRect(0, 0, canvas.width,canvas.height);
-        // }
-
-        // // Join server
-        // document.getElementById("submit").addEventListener("click", ()=>{
-        //     const name = document.getElementById("input").value;
-        //     connection.invoke("RegisterUsername", name).catch(err => console.error(err.toString()));
-        //     const partId = document.getElementById("party").value;
-        //     console.log("Player joined the party with id", partId);
-        //     connection.invoke("JoinGameRoom", partId).catch(err => console.error(err.toString()));
-        // });
 
         connection.on("PlayerConnected", (width, height) => {
             canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-            context.fillStyle = "#000000";
+            canvas.height = window.innerHeight;
+            context.fillStyle = "#FFFFFF";
             context.fillRect(0, 0, canvas.width,canvas.height);
+        });   
+
+       // Event listener for keydown events
+        window.addEventListener('keydown', (event) => {
+            console.log(event.key)
+            if (event.key in keys) {
+                keys[event.key] = true;
+                // Example: Check for diagonal movement
+                if (keys.w && keys.d) {
+                    
+                    connection.invoke("HandleInput", "wd")
+                } else if (keys.w && keys.a) {
+                    connection.invoke("HandleInput", "wa")
+
+                } else if (keys.s && keys.d) {
+                    connection.invoke("HandleInput", "sd")
+
+                } else if (keys.s && keys.a) {
+                    connection.invoke("HandleInput", "sa")
+
+                } else if (keys.w) {
+                    connection.invoke("HandleInput", "w")
+
+                } else if (keys.s) {
+                    connection.invoke("HandleInput", "s")
+
+                } else if (keys.d) {
+                    connection.invoke("HandleInput", "d")
+
+                } else if (keys.a) {
+                    connection.invoke("HandleInput", "a")
+
+                }
+            }
         });
 
-        // const canvas = document.getElementById('drawingCanvas');
-        // const context = canvas.getContext('2d');
-        // connection.on("ReceivePlayerMove", function(x){
+        window.addEventListener('keyup', (event) => {
+            if (event.key in keys) {
+                keys[event.key] = false;
+            }
+        });
+        
+        function gameloop()
+        {
+            context.clearRect(0, 0, canvas.width, canvas.height)
+            for (const id in players) 
+            {
+                const frontEndPlayer = players[id];
+                frontEndPlayer.draw();
+            }
+            requestAnimationFrame(gameloop);
+        }
+        requestAnimationFrame(gameloop);
 
-
-        //     // Clear canvas so it would not trace the previous position
-        //     context.clearRect(0, 0, canvas.width, canvas.height);   
-
-        //     // Deserialise json sent from backend
-        //     const data = JSON.parse(x);
-
-        //     // Draw every a rectangle for each player currently connected to the party
-        //     for(let i = 0; i < data.length; i++)
-        //     {
-        //         context.fillStyle = '#FF5733';
-        //         context.fillRect(data[i].x_pos, data[i].y_pos, 50, 50); 
-        //     }
-        // })
-        // document.addEventListener('keydown', function(event) {
-        //     let direction = null;
-        //     switch (event.key) {
-        //         case 'ArrowUp':
-        //             direction = 'up';
-        //             break;
-        //         case 'ArrowDown':
-        //             direction = 'down';
-        //             break;
-        //         case 'ArrowLeft':
-        //             direction = 'left';
-        //             break;
-        //         case 'ArrowRight':
-        //             direction = 'right';
-        //             break;
-        //     }
-        //     if (direction !== null) {
-        //         connection.invoke('MovePlayer', direction).catch(err => console.error(err.toString()));
-        //     }
-    
+        class Player
+        {
+            constructor(x, y, connectionId, color)
+            {
+                this.x = x;
+                this.y = y;
+                this.connectionId = connectionId;
+                this.color = color;
+                this.radius = 10;
+            }
+            draw() {
+                context.shadowColor = this.color
+                context.shadowBlur = 20
+                context.beginPath()
+                context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+                context.fillStyle = this.color
+                context.fill()
+                context.restore()
+            }
+        }
     </script>
 </body>
 </html>

@@ -27,8 +27,24 @@ namespace SpaceInvaders.Models2
         {
             switch(input)
             {
-                case "w":
+                case "wd":
+                    y-=speed;
+                    x+=speed;
+                    break;
+                case "sd":
                     y+=speed;
+                    x+=speed;
+                    break;
+                case "wa":
+                    y-=speed;
+                    x-=speed;
+                    break;
+                case "sa":
+                    y+=speed;
+                    x-=speed;
+                    break;
+                case "w":
+                    y-=speed;
                     break;
                 case "s":
                     y+=speed;

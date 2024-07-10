@@ -5,8 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Reactive.Linq;
-using SpaceInvaders.Models2;
 using Newtonsoft.Json;
+using SpaceInvaders.Models2;
 
 namespace SpaceInvaders.Hubs
 {
@@ -23,7 +23,7 @@ namespace SpaceInvaders.Hubs
         public void Dispose()
         {
             this.subscription?.Dispose();
-        }    
+        }
         public Task StartAsync(CancellationToken cancellationToken)
         {
             this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("UpdateData"));
@@ -38,6 +38,7 @@ namespace SpaceInvaders.Hubs
     public class Game
     {
         // HashMap for storing players for O(1) retrieval
+
         public readonly int Width = 720;
         public readonly int Height = 720;
         public Dictionary<string, Player> players = new Dictionary<string, Player>(); 
@@ -53,31 +54,30 @@ namespace SpaceInvaders.Hubs
         public GameHub(Game game)
         {
             this.game = game;
-
         }
         public override async Task OnConnectedAsync()
         {
             string connectionId = Context.ConnectionId;
-            // Add the player the storage
             game.players.Add(connectionId, new Player(connectionId, 0, 0, 10));
-            // await Groups.AddToGroupAsync(connectionId, "Players");
-            // await SendMap();
-            // await Clients.Group("Players").SendAsync("PlayerConnected", connectionId);
-
             await Clients.Caller.SendAsync("PlayerConnected", game.Width, game.Height);
             await UpdateData();
         }
         // Method for moving player given direction from user input
         public async Task UpdateData()
         {
-            var players = game.players.Values.Select(e => e.ToPlayerDto()).ToList();
-            await Clients.All.SendAsync("RecieveData", JsonConvert.SerializeObject(players));
+            await Clients.All.SendAsync("RecieveData", JsonConvert.SerializeObject(game.players));
         }
-        public async Task HandleInput(string input)
+        public async Task a(string input)
         {
             Player currentPlayer = game.players[Context.ConnectionId];
             currentPlayer.MovePlayer(input);
             await UpdateData();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            game.players.Remove(Context.ConnectionId);
+            await base.OnDisconnectedAsync(exception);
         }
     }
 }
