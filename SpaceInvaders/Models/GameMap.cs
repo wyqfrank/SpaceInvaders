@@ -1,4 +1,6 @@
-﻿namespace SpaceInvaders.Models
+﻿using SpaceInvaders.Models2;
+
+namespace SpaceInvaders.Models
 {
     public class GameMap
     {
