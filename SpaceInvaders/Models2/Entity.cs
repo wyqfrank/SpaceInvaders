@@ -52,4 +52,6 @@ namespace SpaceInvaders.Models2
             this.canShoot = canShoot;
         }
     }
+
+ 
 }

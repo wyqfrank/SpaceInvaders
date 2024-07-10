@@ -2,26 +2,62 @@
 {
     public class GameMap
     {
-        
-        private char[][] mapLayout { get; }
-        public GameMap(int width, int height) {
-            mapLayout = new char[height][];
+        private Dictionary<Entity, Tuple<int, int>>[,] MapLayout { get; }
+
+
+        public GameMap(int width, int height)
+        {
+            MapLayout = new Dictionary<Entity, Tuple<int, int>>[height, width];
+
             for (int i = 0; i < height; i++)
             {
-                mapLayout[i] = new char[width];
-                for (int j =0; j < width; j++)
+                for (int j = 0; j < width; j++)
                 {
-                    mapLayout[i][j] = '.';
+                    MapLayout[i, j] = new Dictionary<Entity, Tuple<int, int>>();
                 }
             }
+
         }
-        public char[][] GetMapLayout()
+
+        public Dictionary<Entity, Tuple<int, int>>[,] GetMapLayout()
         {
-            return mapLayout;
+            return MapLayout;
         }
-        public void UpdatePosition(int x, int y, char entity)
+
+        public void AddEntity(Entity entity, int x, int y)
         {
-             mapLayout[x][y] = entity;
+            if (entity is Mob || entity is Player)
+            {
+                if (x >= 0 && x < MapLayout.GetLength(1) && y >= 0 && y < MapLayout.GetLength(0))
+                {
+                    MapLayout[y, x].Add(entity, Tuple.Create(x, y));
+                }
+                else
+                {
+                    Console.WriteLine("Position out of bounds.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Only Mob and Player entities can be added to the map.");
+            }
+        }
+
+        public void PrintMap()
+        {
+            for (int i = 0; i < MapLayout.GetLength(0); i++)
+            {
+                for (int j = 0; j < MapLayout.GetLength(1); j++)
+                {
+                    Console.Write("[");
+                    foreach (var entity in MapLayout[i, j])
+                    {
+                        Console.Write(entity.ToString() + " ");
+                    }
+                    Console.Write("]");
+                }
+                Console.WriteLine();
+            }
         }
 
     }

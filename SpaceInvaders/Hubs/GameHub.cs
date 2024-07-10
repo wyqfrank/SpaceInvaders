@@ -23,7 +23,7 @@ namespace SpaceInvaders.Hubs
         public void Dispose()
         {
             this.subscription?.Dispose();
-        }
+        }    
         public Task StartAsync(CancellationToken cancellationToken)
         {
             this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("UpdateData"));
@@ -38,7 +38,6 @@ namespace SpaceInvaders.Hubs
     public class Game
     {
         // HashMap for storing players for O(1) retrieval
-
         public readonly int Width = 720;
         public readonly int Height = 720;
         public Dictionary<string, Player> players = new Dictionary<string, Player>(); 
