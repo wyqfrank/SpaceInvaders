@@ -1,12 +1,10 @@
-﻿using SpaceInvaders.Models2;
+﻿using SpaceInvaders.Models;
 
 namespace SpaceInvaders.Models
 {
     public class GameMap
     {
-        private Dictionary<Entity, Position>[,] MapLayout { get; }
-
-
+        private Dictionary<Entity, Tuple<int, int>>[,] MapLayout { get; }
         public GameMap(int width, int height)
         {
             MapLayout = new Dictionary<Entity, Position>[height, width];
@@ -20,8 +18,7 @@ namespace SpaceInvaders.Models
             }
 
         }
-
-        public Dictionary<Entity, Position>[,] GetMapLayout()
+        public Dictionary<Entity, Tuple<int, int>>[,] GetMapLayout()
         {
             return MapLayout;
         }

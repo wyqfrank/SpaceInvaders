@@ -1,12 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Web;
 using System.Reactive.Linq;
 using Newtonsoft.Json;
-using SpaceInvaders.Models2;
+using SpaceInvaders.Models;
 
 namespace SpaceInvaders.Hubs
 {
@@ -42,7 +38,6 @@ namespace SpaceInvaders.Hubs
         public readonly int Width = 720;
         public readonly int Height = 720;
         public Dictionary<string, Player> players = new Dictionary<string, Player>(); 
-        public Dictionary<string, Mob> mobs = new Dictionary<string, Mob>();
     }
 
     public class GameHub : Hub
@@ -67,8 +62,10 @@ namespace SpaceInvaders.Hubs
         {
             await Clients.All.SendAsync("RecieveData", JsonConvert.SerializeObject(game.players));
         }
-        public async Task a(string input)
+        public async Task HandleInput(string input)
         {
+
+            Console.WriteLine(input);
             Player currentPlayer = game.players[Context.ConnectionId];
             currentPlayer.MovePlayer(input);
             await UpdateData();
