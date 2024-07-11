@@ -3,41 +3,43 @@ using Microsoft.Extensions.Hosting;
 using System.Reactive.Linq;
 using Newtonsoft.Json;
 using SpaceInvaders.Models;
+using SpaceInvaders.Controllers;
 
 namespace SpaceInvaders.Hubs
 {
     // Class for encapsulating .
-    public sealed class HostedBroadcaster : IHostedService, IDisposable
-    {
-        private readonly IHubContext<GameHub> hubContext;
-        private IDisposable subscription;
+    //public sealed class HostedBroadcaster : IHostedService, IDisposable
+    //{
+    //    private readonly IHubContext<GameHub> hubContext;
+    //    private IDisposable subscription;
 
-        public HostedBroadcaster(IHubContext<GameHub> hubContext)
-        {
-            this.hubContext = hubContext;
-        }
-        public void Dispose()
-        {
-            this.subscription?.Dispose();
-        }
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("UpdateData"));
-            return Task.CompletedTask;
-        }
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            this.subscription?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
+    //    public hostedbroadcaster(ihubcontext<gamehub> hubcontext)
+    //    {
+    //        this.hubcontext = hubcontext;
+    //    }
+    //    public void Dispose()
+    //    {
+    //        this.subscription?.Dispose();
+    //    }
+    //    public Task StartAsync(CancellationToken cancellationToken)
+    //    {
+    //        this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("UpdateData"));
+    //        return Task.CompletedTask;
+    //    }
+    //    public Task StopAsync(CancellationToken cancellationToken)
+    //    {
+    //        this.subscription?.Dispose();
+    //        return Task.CompletedTask;
+    //    }
+    //}
     public class Game
     {
         // HashMap for storing players for O(1) retrieval
 
         public readonly int Width = 720;
         public readonly int Height = 720;
-        public Dictionary<string, Player> players = new Dictionary<string, Player>(); 
+        public Dictionary<string, Player> players = new Dictionary<string, Player>();
+        public PlayerController playerController = new PlayerController();
     }
 
     public class GameHub : Hub
@@ -67,7 +69,8 @@ namespace SpaceInvaders.Hubs
 
             Console.WriteLine(input);
             Player currentPlayer = game.players[Context.ConnectionId];
-            currentPlayer.MovePlayer(input);
+            game.playerController.MovePlayer(currentPlayer, input);
+            
             await UpdateData();
         }
 
