@@ -40,6 +40,7 @@ namespace SpaceInvaders.Hubs
         public readonly int Height = 720;
         public Dictionary<string, Player> players = new Dictionary<string, Player>();
         public PlayerController playerController = new PlayerController();
+        public Dictionary<string, Mob> mobs = new Dictionary<string, Mob>();
     }
 
     public class GameHub : Hub
@@ -56,6 +57,8 @@ namespace SpaceInvaders.Hubs
         {
             string connectionId = Context.ConnectionId;
             game.players.Add(connectionId, new Player(connectionId, 0, 0, 10));
+            game.mobs.Add("1", new Mob(10, 10, 10, true));
+
             await Clients.Caller.SendAsync("PlayerConnected", game.Width, game.Height);
             await UpdateData();
         }
@@ -63,6 +66,7 @@ namespace SpaceInvaders.Hubs
         public async Task UpdateData()
         {
             await Clients.All.SendAsync("RecieveData", JsonConvert.SerializeObject(game.players));
+            await SendMobData();
         }
         public async Task HandleInput(string input)
         {
@@ -79,5 +83,12 @@ namespace SpaceInvaders.Hubs
             game.players.Remove(Context.ConnectionId);
             await base.OnDisconnectedAsync(exception);
         }
+
+        public async Task SendMobData()
+        {
+            await Clients.All.SendAsync("RecieveMobData", JsonConvert.SerializeObject(game.mobs));
+        }
     }
+
+
 }
