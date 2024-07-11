@@ -11,7 +11,7 @@
             this.x = x;
             this.y = y;
             this.speed = speed;
-            this.health = health;
+            this.health = health;            
         }        
     }
 }

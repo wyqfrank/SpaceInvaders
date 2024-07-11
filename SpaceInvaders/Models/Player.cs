@@ -9,7 +9,7 @@
         }
         public void MovePlayer(string input)
         {
-             switch(input)
+            switch(input)
             {
                 case "wd":
                     y-=speed;

@@ -4,7 +4,6 @@
     {
         public int x { get; set; } = x;
         public int y { get; set; } = y;
-
         public (int, int) ToTuple()
         {
             return (x, y);
@@ -13,7 +12,6 @@
         {
             return new Position(tuple.Item1, tuple.Item2);
         }
-
         public override string ToString()
         {
             return $"({x}, {y})";

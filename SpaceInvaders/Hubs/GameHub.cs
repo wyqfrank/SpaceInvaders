@@ -64,8 +64,6 @@ namespace SpaceInvaders.Hubs
         }
         public async Task HandleInput(string input)
         {
-
-            Console.WriteLine(input);
             Player currentPlayer = game.players[Context.ConnectionId];
             currentPlayer.MovePlayer(input);
             await UpdateData();

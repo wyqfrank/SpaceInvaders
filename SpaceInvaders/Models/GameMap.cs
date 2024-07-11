@@ -8,7 +8,6 @@ namespace SpaceInvaders.Models
         public GameMap(int width, int height)
         {
             MapLayout = new Dictionary<Entity, Tuple<int, int>>[height, width];
-
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
@@ -16,7 +15,6 @@ namespace SpaceInvaders.Models
                     MapLayout[i, j] = new Dictionary<Entity, Tuple<int, int>>();
                 }
             }
-
         }
         public Dictionary<Entity, Tuple<int, int>>[,] GetMapLayout()
         {
