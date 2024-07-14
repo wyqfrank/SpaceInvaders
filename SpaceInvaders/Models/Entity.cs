@@ -14,11 +14,11 @@
             this.speed = speed;
             this.health = health;
         }
-
-        //public int X
+        // change getter and setters to C# standard
+        //public int X 
         //{
         //    get { return X; }
-        //    set { x = value; } 
+        //    set { x = value; }
 
         //}
 
