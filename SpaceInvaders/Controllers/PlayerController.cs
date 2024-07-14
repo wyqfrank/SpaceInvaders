@@ -5,6 +5,16 @@ namespace SpaceInvaders.Controllers
 {
     public class PlayerController
     {
+
+        private int mapHeight;
+        private int mapWidth;
+
+        public PlayerController(int mapHeight, int mapWidth)
+        {
+            this.mapHeight = mapHeight;
+            this.mapWidth = mapWidth;
+        }
+
         public void MovePlayer(Player player, string input)
         {
 
@@ -46,8 +56,17 @@ namespace SpaceInvaders.Controllers
                     Console.WriteLine("Invalid input.");
                     return;
             }
-            player.setX(x);
-            player.setY(y);
+
+            if(x <= 0 || x >= mapWidth || y <= 0 || y >= mapHeight)
+            {
+                Console.WriteLine("Out of border");
+            }
+            else
+            {
+                player.setX(x);
+                player.setY(y);
+            }
+            
             Console.WriteLine(x+ ","+y); 
             // check if can be done using tuples
         }
