@@ -39,7 +39,7 @@ namespace SpaceInvaders.Hubs
         public readonly int Width = 720;
         public readonly int Height = 720;
         public Dictionary<string, Player> players = new Dictionary<string, Player>();
-        public PlayerController playerController = new PlayerController();
+        public PlayerController playerController = new PlayerController(500, 500);
         public Dictionary<string, Mob> mobs = new Dictionary<string, Mob>();
     }
 
