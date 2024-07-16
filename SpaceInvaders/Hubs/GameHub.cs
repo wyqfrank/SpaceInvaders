@@ -29,7 +29,7 @@ namespace SpaceInvaders.Hubs
         {
             List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
 
-            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => 
+            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(50)).Subscribe(_ => 
                 hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(game.GetBulletData()))
                 );
             return Task.CompletedTask;
@@ -80,8 +80,6 @@ namespace SpaceInvaders.Hubs
         {
             string connectionId = Context.ConnectionId;
             game.players.Add(connectionId, new Player(connectionId, 0, 0, 10));
-            game.mobs.Add("1", new Mob(10, 10, 10, true));
-            
             await Clients.Caller.SendAsync("PlayerConnected", game.Width, game.Height);
 
             await UpdateData();
