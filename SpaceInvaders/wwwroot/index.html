@@ -60,16 +60,10 @@
         const context = canvas.getContext('2d');
         const players = {};
         const mobs = {};
-        connection.on("GlobalUpdate", function (players, mobs) {
-            const playerData = JSON.parse(players);
-            const mobData = JSON.parse(mobs);
-            console.log(playerData);
-            console.log(mobData);
-        })
+        const bullets = []
 
         connection.on("RecieveData", function (backendPlayers) {
             const data = JSON.parse(backendPlayers);
-            console.log(data);
             for (const id in data) {
                 const backendPlayer = data[id];
                 if (!players[id]) {
@@ -80,13 +74,18 @@
                     players[id].y = backendPlayer.y;
                 }
             }
-
-            console.log(players);
         });
 
-        connection.on("RecieveMobData", function (backendMobs) {
+        connection.on("GlobalUpdate", function (backendMobs, backendBullets) {
             const data = JSON.parse(backendMobs);
-            console.log(data);
+            const bulletData = JSON.parse(backendBullets);
+            for(let i = 0; i < bulletData.length; i++)
+            {
+
+                const backendBullet = bulletData[i];
+                bullets[i] = new Bullet(backendBullet.x, backendBullet.y, backendBullet.Id);
+            }
+            
             for (const id in data) {
                 const backendMob = data[id];
                 if (!mobs[id]) {
@@ -132,6 +131,10 @@
         });
 
         window.addEventListener('keyup', (event) => {
+            if(event.key == " ")
+            {
+                connection.invoke("Shoot");
+            }
             if (event.key in keys) {
                 keys[event.key] = false;
             }
@@ -139,6 +142,12 @@
 
         function gameloop() {
             context.clearRect(0, 0, canvas.width, canvas.height)
+
+            for(let i = 0; i < bullets.length; i++)
+            {
+                bullets[i].draw();
+            }
+
             for (const id in players) {
                 const frontEndPlayer = players[id];
                 frontEndPlayer.draw();
@@ -152,6 +161,22 @@
             requestAnimationFrame(gameloop);
         }
         requestAnimationFrame(gameloop);
+
+        class Bullet {
+            constructor(x, y, id)
+            {
+                this.x = x;
+                this.y = y;
+                this.id = id;
+            }
+
+            draw()
+            {
+                context.fillStyle = "#FFFFFF";
+                context.fillRect(this.x, this.y, 2, 10);
+            }
+        }
+
 
         class Mob {
             constructor(x, y, Id, colour) {

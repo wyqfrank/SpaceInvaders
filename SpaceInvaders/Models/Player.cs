@@ -2,7 +2,7 @@
 {
     public class Player : Entity
     {
-        public Dictionary<string, Bullet> bullets = new();
+        public List<Bullet> bullets = new();
         public string connectionId;
         public Player(string connectionId, int x, int y, int speed) : base(x, y, speed)
         {
@@ -10,8 +10,8 @@
         }
         public void Shoot()
         {
-            Bullet bullet = new Bullet(x, y);
-            bullets.Add(Guid.NewGuid().ToString(), bullet);
+            Bullet bullet = new Bullet(x, y, Guid.NewGuid().ToString());
+            bullets.Add(bullet);
         }
     }
 }
