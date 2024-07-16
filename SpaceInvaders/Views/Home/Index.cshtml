@@ -130,12 +130,14 @@
         });
 
         window.addEventListener('keyup', (event) => {
-            if(event.key == " ")
-            {
-                connection.invoke("Shoot");
-            }
             if (event.key in keys) {
                 keys[event.key] = false;
+            }
+        });
+
+        window.addEventListener('keypress', (event) => {
+            if (event.key == " ") {
+                connection.invoke("Shoot");
             }
         });
 

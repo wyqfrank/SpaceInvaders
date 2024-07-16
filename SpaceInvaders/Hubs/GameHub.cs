@@ -29,7 +29,7 @@ namespace SpaceInvaders.Hubs
         {
             List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
 
-            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(50)).Subscribe(_ => 
+            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => 
                 hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(game.GetBulletData()))
                 );
             return Task.CompletedTask;
@@ -54,19 +54,58 @@ namespace SpaceInvaders.Hubs
         public List<Bullet> GetBulletData()
         {
             List<Bullet> bullets = new List<Bullet>();
-            foreach(var player in players.Values.ToList())
+            foreach (Player player in players.Values.ToList())
             {
-                foreach(var bullet in player.bullets)
-                {
-                    bullet.Update();
-                }
-                bullets.AddRange(player.bullets);
+                bullets.AddRange(UpdateBullets(player, mobs));
             }
             return bullets;
         }
-    }
 
-    public class GameHub : Hub
+        public List<Bullet> UpdateBullets(Player player, Dictionary<string, Mob> mobs)
+        {
+            List<Bullet> bulletsToRemove = new List<Bullet>();
+            List<Bullet> updatedBullets = new List<Bullet>();
+            Console.WriteLine(player.bullets.Count);
+            foreach (Bullet bullet in player.bullets.ToList())
+                {
+                Console.WriteLine(bullet.ToString());
+                bullet.Update();
+
+                if (bullet.y <= 0)
+                {
+                   
+                    bullet.Used = true;
+                    bulletsToRemove.Add(bullet);
+                }
+                foreach (Mob mob in mobs.Values)
+                {
+                    bullet.DoDamage(bullet.x, bullet.y, 5, mob);
+                    if (bullet.Used)
+                    {
+                        bulletsToRemove.Add(bullet);
+                        break; // Exit the loop as the bullet is now used
+                    }
+                }
+
+                if (!bullet.Used)
+                {
+                    updatedBullets.Add(bullet);
+                }
+            }
+
+            // Remove bullets that were marked as Used
+            foreach (var bullet in bulletsToRemove)
+            {
+                player.bullets.Remove(bullet);
+            }
+            Console.WriteLine(player.bullets.Count);
+            return updatedBullets;
+        }
+
+
+}
+
+public class GameHub : Hub
     {
         // Have to make static cuz everytime client uses hub function class is reset,
         // use Dictionary to store key pair (connection id and player) as Dictionary has O(1) time complexity for inserting and fetching data
