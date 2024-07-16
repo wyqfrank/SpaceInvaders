@@ -5,28 +5,37 @@
     <title>SignalR Groups Example</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.9/signalr.min.js"></script>
     <style>
-        body { margin: 0; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            align-items: center;
+            text-align: center;
+        }
+
+        canvas {
+            display: block;
+            border: 2px solid black;
+            background-color: black;
+        }
+
         .container {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        canvas {
-            border: 1px solid white;
-        }
     </style>
 </head>
 <body>
-    <!-- <input type="name" value="enter name" id="input">
-    <input type="party id" value="enter party id" id="party">
-    <input type="button" value="Join server" id="submit"> -->
+    <input type="text" placeholder="enter name" id="input">
+    <input type="text" placeholder="enter party id" id="party">
+    <input type="button" value="Join server" id="submit">
     <div class="container">
-        <!-- <h1 class="display-4">Space Invaders</h1> -->
-        <canvas id="drawingCanvas" style="background-color: black;"></canvas>
+        <h1 class="display-4">Space Invaders</h1>
+        <canvas id="drawingCanvas"></canvas>
     </div>
 
     <script>
-
         const keys = {
             w: false,
             a: false,
@@ -45,67 +54,79 @@
             return console.error(err.toString());
         });
 
+        
+
         const canvas = document.getElementById("drawingCanvas");
         const context = canvas.getContext('2d');
-        const players = {}
-    
-        
-        connection.on("RecieveData", function(backendPlayers){
+        const players = {};
+        const mobs = {};
+        connection.on("GlobalUpdate", function (players, mobs) {
+            const playerData = JSON.parse(players);
+            const mobData = JSON.parse(mobs);
+            console.log(playerData);
+            console.log(mobData);
+        })
+
+        connection.on("RecieveData", function (backendPlayers) {
             const data = JSON.parse(backendPlayers);
             console.log(data);
-            for(const id in data)
-            {
+            for (const id in data) {
                 const backendPlayer = data[id];
                 if (!players[id]) {
                     players[id] = new Player(backendPlayer.x, backendPlayer.y, id, "#00FF00")
                 }
-                else
-                {
+                else {
                     players[id].x = backendPlayer.x;
                     players[id].y = backendPlayer.y;
                 }
             }
 
             console.log(players);
-        })
+        });
+
+        connection.on("RecieveMobData", function (backendMobs) {
+            const data = JSON.parse(backendMobs);
+            console.log(data);
+            for (const id in data) {
+                const backendMob = data[id];
+                if (!mobs[id]) {
+                    mobs[id] = new Mob(backendMob.x, backendMob.y, id, "#FF0000")
+                }
+                else {
+                    mobs[id].x = backendMob.x;
+                    mobs[id].y = backendMob.y;
+                }
+            }
+            console.log(mobs);
+        });
 
         connection.on("PlayerConnected", (width, height) => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = 500; // InnerWidth 
+            canvas.height = 500;// InnerHeight
             context.fillStyle = "#FFFFFF";
-            context.fillRect(0, 0, canvas.width,canvas.height);
-        });   
+            context.fillRect(0, 0, canvas.width, canvas.height);
+        });
 
-       // Event listener for keydown events
         window.addEventListener('keydown', (event) => {
             console.log(event.key)
             if (event.key in keys) {
                 keys[event.key] = true;
-                // Example: Check for diagonal movement
                 if (keys.w && keys.d) {
-                    
-                    connection.invoke("HandleInput", "wd")
+                    connection.invoke("HandleInput", "wd");
                 } else if (keys.w && keys.a) {
-                    connection.invoke("HandleInput", "wa")
-
+                    connection.invoke("HandleInput", "wa");
                 } else if (keys.s && keys.d) {
-                    connection.invoke("HandleInput", "sd")
-
+                    connection.invoke("HandleInput", "sd");
                 } else if (keys.s && keys.a) {
-                    connection.invoke("HandleInput", "sa")
-
+                    connection.invoke("HandleInput", "sa");
                 } else if (keys.w) {
-                    connection.invoke("HandleInput", "w")
-
+                    connection.invoke("HandleInput", "w");
                 } else if (keys.s) {
-                    connection.invoke("HandleInput", "s")
-
+                    connection.invoke("HandleInput", "s");
                 } else if (keys.d) {
-                    connection.invoke("HandleInput", "d")
-
+                    connection.invoke("HandleInput", "d");
                 } else if (keys.a) {
-                    connection.invoke("HandleInput", "a")
-
+                    connection.invoke("HandleInput", "a");
                 }
             }
         });
@@ -115,35 +136,54 @@
                 keys[event.key] = false;
             }
         });
-        
-        function gameloop()
-        {
+
+        function gameloop() {
             context.clearRect(0, 0, canvas.width, canvas.height)
-            for (const id in players) 
-            {
+            for (const id in players) {
                 const frontEndPlayer = players[id];
                 frontEndPlayer.draw();
             }
+
+            for (const id in mobs) {
+                const mob = mobs[id];
+                mob.draw();
+            }
+
             requestAnimationFrame(gameloop);
         }
         requestAnimationFrame(gameloop);
 
-        class Player
-        {
-            constructor(x, y, connectionId, color)
-            {
+        class Mob {
+            constructor(x, y, Id, colour) {
+                this.x = x;
+                this.y = y;
+                this.Id = Id;
+                this.colour = colour;
+                this.side = 30;
+            }
+            draw() {
+                context.beginPath();
+                context.fillStyle = this.colour;
+                context.fillRect(this.x, this.y, this.side, this.side);
+                context.closePath();
+            }
+        }
+
+        class Player {
+            constructor(x, y, connectionId, colour) {
                 this.x = x;
                 this.y = y;
                 this.connectionId = connectionId;
-                this.color = color;
+                this.colour = colour;
                 this.radius = 10;
             }
             draw() {
-                context.beginPath()
-                context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-                context.fillStyle = this.color
-                context.fill()
-                context.restore()
+                context.beginPath();
+                context.shadowBlur = 20;
+                context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+                context.fillStyle = this.colour;
+                context.fill();
+                context.closePath();
             }
         }
     </script>

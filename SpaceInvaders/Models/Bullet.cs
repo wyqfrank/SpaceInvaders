@@ -11,5 +11,10 @@ namespace SpaceInvaders.Models
             this.x = x;
             this.y = y;
         }
+        
+        public void Update()
+        {
+            y-= speed;
+        }
     }
 }
