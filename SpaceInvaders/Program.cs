@@ -11,7 +11,7 @@ namespace SpaceInvaders
             builder.Services.AddControllersWithViews();
             builder.Services.AddSignalR();
 
-            // builder.Services.AddHostedService<HostedBroadcaster>();
+            builder.Services.AddHostedService<HostedBroadcaster>();
             // Create singleton to be injected to the GameHub class (Basically creates a global class instance to be accessed by SignalR functions)
             builder.Services.AddSingleton<Game>();
 
