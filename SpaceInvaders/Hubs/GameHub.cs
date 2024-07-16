@@ -30,10 +30,8 @@ namespace SpaceInvaders.Hubs
             List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
 
             this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => 
-                {
-                    List<Bullet> bullets = game.playerController.GetBulletData(game.players.Values.ToList());
-                    hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(bullets));
-                });
+                hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(game.GetBulletData()))
+                );
             return Task.CompletedTask;
         }
         public Task StopAsync(CancellationToken cancellationToken)
@@ -57,51 +55,59 @@ namespace SpaceInvaders.Hubs
 
         public List<Bullet> GetUpdateAllBullets()
         {
-            List<Bullet> bullets = new();
-            foreach(var player in players.Values.ToList())
+            List<Bullet> bullets = new List<Bullet>();
+            foreach (Player player in players.Values.ToList())
             {
-                foreach(var bullet in player.bullets)
-                {
-                    bullet.Update();
-                }
-                bullets.AddRange(player.bullets);
-            } 
+                bullets.AddRange(UpdateBullets(player, mobs));
+            }
             return bullets;
         }
-        public void Update()
+
+        public List<Bullet> UpdateBullets(Player player, Dictionary<string, Mob> mobs)
         {
-            foreach(var bullet in GetUpdateAllBullets())
-            {
-                if(bullet.y <= 0)
+            List<Bullet> bulletsToRemove = new List<Bullet>();
+            List<Bullet> updatedBullets = new List<Bullet>();
+            Console.WriteLine(player.bullets.Count);
+            foreach (Bullet bullet in player.bullets.ToList())
                 {
+                Console.WriteLine(bullet.ToString());
+                bullet.Update();
+
+                if (bullet.y <= 0)
+                {
+                   
                     bullet.Used = true;
+                    bulletsToRemove.Add(bullet);
                 }
-                foreach(var mob in mobs.Values.ToList())
+                foreach (Mob mob in mobs.Values)
                 {
-                    if(mob.x == bullet.x && mob.y == bullet.y)
+                    bullet.DoDamage(bullet.x, bullet.y, 5, mob);
+                    if (bullet.Used)
                     {
-                        mob.health =- 10;
-                        bullet.Used = true;
+                        bulletsToRemove.Add(bullet);
+                        break; // Exit the loop as the bullet is now used
                     }
                 }
-            } 
 
+                if (!bullet.Used)
+                {
+                    updatedBullets.Add(bullet);
+                }
+            }
 
-            foreach  
+            // Remove bullets that were marked as Used
+            foreach (var bullet in bulletsToRemove)
+            {
+                player.bullets.Remove(bullet);
+            }
+            Console.WriteLine(player.bullets.Count);
+            return updatedBullets;
         }
-    }
 
-    public class CollisionChecker
-    {
-        public List<Player> players = new();
-        public List<Mob> mobs = new();
-    
-        public void Update()
-        {
-            
-        }
-    }
-    public class GameHub : Hub
+
+}
+
+public class GameHub : Hub
     {
         // Have to make static cuz everytime client uses hub function class is reset,
         // use Dictionary to store key pair (connection id and player) as Dictionary has O(1) time complexity for inserting and fetching data
