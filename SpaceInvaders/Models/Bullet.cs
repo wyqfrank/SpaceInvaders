@@ -18,4 +18,18 @@ public class Bullet
     {
         y -= speed;
     }
+
+    public void DoDamage(int x, int y, int damage, Entity entity)
+    {
+        if (entity.y == y && entity.x == x)
+        {
+            Console.WriteLine("pew pew pew");
+            entity.health += damage;
+        }
+    }
+
+    public override string ToString()
+    {
+        return $"{x},{y} ({id}: {Used})";
+    }
 }

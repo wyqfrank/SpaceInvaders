@@ -54,7 +54,7 @@
             return this.health;
         }
 
-        public void setHealth(int health)
+        public void setHealth(int health) // change these as not necessary and style wrong should be capitalise
         {
             this.health = health;
         }
