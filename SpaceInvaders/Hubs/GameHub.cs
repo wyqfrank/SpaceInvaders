@@ -1,50 +1,49 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
+using System;
 using System.Reactive.Linq;
-using Newtonsoft.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using SpaceInvaders.Models;
 using SpaceInvaders.Controllers;
-using System.Threading.Tasks;
-
 
 namespace SpaceInvaders.Hubs
 {
     // Class for encapsulating .
-    public sealed class HostedBroadcaster : IHostedService, IDisposable
-    {
-       private readonly IHubContext<GameHub> hubContext;
-       private readonly Game game;
-       private IDisposable subscription;
+    //public sealed class HostedBroadcaster : IHostedService, IDisposable
+    //{
+    //    private readonly IHubContext<GameHub> hubContext;
+    //    private IDisposable subscription;
 
-       public HostedBroadcaster(IHubContext<GameHub> hubcontext, Game game)
-       {
-           this.hubContext = hubcontext;
-           this.game = game;
-       }
-       public void Dispose()
-       {
-           this.subscription?.Dispose();
-       }
-       public Task StartAsync(CancellationToken cancellationToken)
-       {
-           this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.players), JsonConvert.SerializeObject(game.mobs)));
-           return Task.CompletedTask;
-       }
-       public Task StopAsync(CancellationToken cancellationToken)
-       {
-           this.subscription?.Dispose();
-           return Task.CompletedTask;
-       }
-    }
+    //    public hostedbroadcaster(ihubcontext<gamehub> hubcontext)
+    //    {
+    //        this.hubcontext = hubcontext;
+    //    }
+    //    public void Dispose()
+    //    {
+    //        this.subscription?.Dispose();
+    //    }
+    //    public Task StartAsync(CancellationToken cancellationToken)
+    //    {
+    //        this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("UpdateData"));
+    //        return Task.CompletedTask;
+    //    }
+    //    public Task StopAsync(CancellationToken cancellationToken)
+    //    {
+    //        this.subscription?.Dispose();
+    //        return Task.CompletedTask;
+    //    }
+    //}
     public class Game
     {
         // HashMap for storing players for O(1) retrieval
 
-        public readonly int Width = 720;
-        public readonly int Height = 720;
+        public readonly int Width = 500;
+        public readonly int Height = 500;
         public Dictionary<string, Player> players = new Dictionary<string, Player>();
         public PlayerController playerController = new PlayerController(500, 500);
         public Dictionary<string, Mob> mobs = new Dictionary<string, Mob>();
+        public MobPatternGenerator mobPatternGenerator = new MobPatternGenerator();
     }
 
     public class GameHub : Hub
@@ -64,6 +63,7 @@ namespace SpaceInvaders.Hubs
             game.mobs.Add("1", new Mob(10, 10, 10, true));
 
             await Clients.Caller.SendAsync("PlayerConnected", game.Width, game.Height);
+            await sendMobPattern();
             await UpdateData();
         }
         // Method for moving player given direction from user input
@@ -71,6 +71,7 @@ namespace SpaceInvaders.Hubs
         {
             await Clients.All.SendAsync("RecieveData", JsonConvert.SerializeObject(game.players));
             await SendMobData();
+          
         }
         public async Task HandleInput(string input)
         {
@@ -92,7 +93,10 @@ namespace SpaceInvaders.Hubs
         {
             await Clients.All.SendAsync("RecieveMobData", JsonConvert.SerializeObject(game.mobs));
         }
+
+        public async Task sendMobPattern()
+        {
+            List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
+            await Clients.All.SendAsync("RecieveMobData", JsonConvert.SerializeObject(mobPattern));
+        }
     }
-
-
-}

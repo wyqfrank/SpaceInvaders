@@ -27,6 +27,7 @@ namespace SpaceInvaders.Controllers
             int x = player.getX();
             int y = player.getY();
             int speed = player.getSpeed();
+            // confused
             switch (input)
             {
                 case "wd":

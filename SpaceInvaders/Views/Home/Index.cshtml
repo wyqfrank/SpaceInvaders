@@ -60,13 +60,11 @@
         const context = canvas.getContext('2d');
         const players = {};
         const mobs = {};
-
-        connection.on("GlobalUpdate", function(players, mobs)
-        {
+        connection.on("GlobalUpdate", function (players, mobs) {
             const playerData = JSON.parse(players);
-             const mobData = JSON.parse(mobs);
-             console.log(playerData);
-             console.log(mobData);
+            const mobData = JSON.parse(mobs);
+            console.log(playerData);
+            console.log(mobData);
         })
 
         connection.on("RecieveData", function (backendPlayers) {
