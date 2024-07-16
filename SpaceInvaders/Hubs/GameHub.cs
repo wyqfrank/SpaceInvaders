@@ -29,7 +29,9 @@ namespace SpaceInvaders.Hubs
         {
             List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
 
-            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.players), JsonConvert.SerializeObject(mobPattern), JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern))));
+            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => 
+                hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(game.GetBulletData()))
+                );
             return Task.CompletedTask;
         }
         public Task StopAsync(CancellationToken cancellationToken)
@@ -49,6 +51,19 @@ namespace SpaceInvaders.Hubs
         public PlayerController playerController = new PlayerController(500, 500);
         public Dictionary<string, Mob> mobs = new Dictionary<string, Mob>();
         public MobPatternGenerator mobPatternGenerator = new MobPatternGenerator();
+        public List<Bullet> GetBulletData()
+        {
+            List<Bullet> bullets = new List<Bullet>();
+            foreach(var player in players.Values.ToList())
+            {
+                foreach(var bullet in player.bullets)
+                {
+                    bullet.Update();
+                }
+                bullets.AddRange(player.bullets);
+            }
+            return bullets;
+        }
     }
 
     public class GameHub : Hub
@@ -66,16 +81,15 @@ namespace SpaceInvaders.Hubs
             string connectionId = Context.ConnectionId;
             game.players.Add(connectionId, new Player(connectionId, 0, 0, 10));
             game.mobs.Add("1", new Mob(10, 10, 10, true));
-
+            
             await Clients.Caller.SendAsync("PlayerConnected", game.Width, game.Height);
-            await sendMobPattern();
+
             await UpdateData();
         }
         // Method for moving player given direction from user input
         public async Task UpdateData()
         {
             await Clients.All.SendAsync("RecieveData", JsonConvert.SerializeObject(game.players));
-            await SendMobData();
           
         }
         public async Task HandleInput(string input)
@@ -93,15 +107,19 @@ namespace SpaceInvaders.Hubs
             game.players.Remove(Context.ConnectionId);
             await base.OnDisconnectedAsync(exception);
         }
-
-        public async Task SendMobData()
+        public void Shoot()
         {
-            await Clients.All.SendAsync("RecieveMobData", JsonConvert.SerializeObject(game.mobs));
+            Player currentPlayer = game.players[Context.ConnectionId];
+            currentPlayer.Shoot();
         }
+        // public async Task SendMobData()
+        // {
+        //     await Clients.All.SendAsync("RecieveMobData", JsonConvert.SerializeObject(game.mobs));
+        // }
 
-        public async Task sendMobPattern()
-        {
-            List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
-            await Clients.All.SendAsync("RecieveMobData", JsonConvert.SerializeObject(mobPattern));
-        }
+        // public async Task sendMobPattern()
+        // {
+        //     List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
+        //     await Clients.All.SendAsync("RecieveMobData", JsonConvert.SerializeObject(mobPattern));
+        // }
     }

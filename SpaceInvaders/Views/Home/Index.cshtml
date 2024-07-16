@@ -54,11 +54,12 @@
             return console.error(err.toString());
         });
 
+        
+
         const canvas = document.getElementById("drawingCanvas");
         const context = canvas.getContext('2d');
         const players = {};
         const mobs = {};
-
         connection.on("GlobalUpdate", function (players, mobs) {
             const playerData = JSON.parse(players);
             const mobData = JSON.parse(mobs);
