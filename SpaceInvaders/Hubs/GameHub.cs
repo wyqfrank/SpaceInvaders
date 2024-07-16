@@ -29,9 +29,11 @@ namespace SpaceInvaders.Hubs
         {
             List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
 
-            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(50)).Subscribe(_ => 
-                hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(game.GetBulletData()))
-                );
+            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => 
+                {
+                    List<Bullet> bullets = game.playerController.GetBulletData(game.players.Values.ToList());
+                    hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(bullets));
+                });
             return Task.CompletedTask;
         }
         public Task StopAsync(CancellationToken cancellationToken)
@@ -51,9 +53,11 @@ namespace SpaceInvaders.Hubs
         public PlayerController playerController = new PlayerController(500, 500);
         public Dictionary<string, Mob> mobs = new Dictionary<string, Mob>();
         public MobPatternGenerator mobPatternGenerator = new MobPatternGenerator();
-        public List<Bullet> GetBulletData()
+
+
+        public List<Bullet> GetUpdateAllBullets()
         {
-            List<Bullet> bullets = new List<Bullet>();
+            List<Bullet> bullets = new();
             foreach(var player in players.Values.ToList())
             {
                 foreach(var bullet in player.bullets)
@@ -61,11 +65,42 @@ namespace SpaceInvaders.Hubs
                     bullet.Update();
                 }
                 bullets.AddRange(player.bullets);
-            }
+            } 
             return bullets;
+        }
+        public void Update()
+        {
+            foreach(var bullet in GetUpdateAllBullets())
+            {
+                if(bullet.y <= 0)
+                {
+                    bullet.Used = true;
+                }
+                foreach(var mob in mobs.Values.ToList())
+                {
+                    if(mob.x == bullet.x && mob.y == bullet.y)
+                    {
+                        mob.health =- 10;
+                        bullet.Used = true;
+                    }
+                }
+            } 
+
+
+            foreach  
         }
     }
 
+    public class CollisionChecker
+    {
+        public List<Player> players = new();
+        public List<Mob> mobs = new();
+    
+        public void Update()
+        {
+            
+        }
+    }
     public class GameHub : Hub
     {
         // Have to make static cuz everytime client uses hub function class is reset,
@@ -96,7 +131,6 @@ namespace SpaceInvaders.Hubs
             Console.WriteLine(input);
             Player currentPlayer = game.players[Context.ConnectionId];
             game.playerController.MovePlayer(currentPlayer, input);
-            
             await UpdateData();
         }
 
@@ -108,7 +142,7 @@ namespace SpaceInvaders.Hubs
         public void Shoot()
         {
             Player currentPlayer = game.players[Context.ConnectionId];
-            currentPlayer.Shoot();
+            game.playerController.PlayerShoot(currentPlayer);
         }
         // public async Task SendMobData()
         // {
