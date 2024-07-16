@@ -6,34 +6,39 @@ using System.Threading;
 using System.Threading.Tasks;
 using SpaceInvaders.Models;
 using SpaceInvaders.Controllers;
+using Newtonsoft.Json;
 
 namespace SpaceInvaders.Hubs
 {
-    // Class for encapsulating .
-    //public sealed class HostedBroadcaster : IHostedService, IDisposable
-    //{
-    //    private readonly IHubContext<GameHub> hubContext;
-    //    private IDisposable subscription;
+    public sealed class HostedBroadcaster : IHostedService, IDisposable
+    {
+        private readonly IHubContext<GameHub> hubContext;
+        private readonly Game game;
+        private IDisposable subscription;
 
-    //    public hostedbroadcaster(ihubcontext<gamehub> hubcontext)
-    //    {
-    //        this.hubcontext = hubcontext;
-    //    }
-    //    public void Dispose()
-    //    {
-    //        this.subscription?.Dispose();
-    //    }
-    //    public Task StartAsync(CancellationToken cancellationToken)
-    //    {
-    //        this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("UpdateData"));
-    //        return Task.CompletedTask;
-    //    }
-    //    public Task StopAsync(CancellationToken cancellationToken)
-    //    {
-    //        this.subscription?.Dispose();
-    //        return Task.CompletedTask;
-    //    }
-    //}
+        public HostedBroadcaster(IHubContext<GameHub> hubcontext, Game game)
+        {
+            this.hubContext = hubcontext;
+            this.game = game;
+        }
+        public void Dispose()
+        {
+            this.subscription?.Dispose();
+        }
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
+
+            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.players), JsonConvert.SerializeObject(mobPattern), JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern))));
+            return Task.CompletedTask;
+        }
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            this.subscription?.Dispose();
+            return Task.CompletedTask;
+        }
+    }
+}
     public class Game
     {
         // HashMap for storing players for O(1) retrieval
