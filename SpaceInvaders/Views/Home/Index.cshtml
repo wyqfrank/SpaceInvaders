@@ -60,7 +60,7 @@
         const context = canvas.getContext('2d');
         const players = {};
         const mobs = {};
-        const bullets = []
+        let bullets = []
 
         connection.on("RecieveData", function (backendPlayers) {
             const data = JSON.parse(backendPlayers);
@@ -79,11 +79,13 @@
         connection.on("GlobalUpdate", function (backendMobs, backendBullets) {
             const data = JSON.parse(backendMobs);
             const bulletData = JSON.parse(backendBullets);
+
+
+            const newBulletArray = [];
             for(let i = 0; i < bulletData.length; i++)
             {
-
                 const backendBullet = bulletData[i];
-                bullets[i] = new Bullet(backendBullet.x, backendBullet.y, backendBullet.Id);
+                newBulletArray[i] = new Bullet(backendBullet.x, backendBullet.y, backendBullet.Id);
             }
             
             for (const id in data) {
@@ -96,6 +98,10 @@
                     mobs[id].y = backendMob.y;
                 }
             }
+            
+            bullets = newBulletArray;
+
+            console.log(bullets);
         });
 
         connection.on("PlayerConnected", (width, height) => {

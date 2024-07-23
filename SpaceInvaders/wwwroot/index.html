@@ -60,7 +60,7 @@
         const context = canvas.getContext('2d');
         const players = {};
         const mobs = {};
-        const bullets = []
+        const bullets = {};
 
         connection.on("RecieveData", function (backendPlayers) {
             const data = JSON.parse(backendPlayers);
@@ -79,11 +79,21 @@
         connection.on("GlobalUpdate", function (backendMobs, backendBullets) {
             const data = JSON.parse(backendMobs);
             const bulletData = JSON.parse(backendBullets);
-            for(let i = 0; i < bulletData.length; i++)
-            {
 
-                const backendBullet = bulletData[i];
-                bullets[i] = new Bullet(backendBullet.x, backendBullet.y, backendBullet.Id);
+            console.log(bulletData);
+
+            for(const id in bulletData)
+            {
+                const backendBullet = bulletData[id];
+                if(!bullets[id])
+                {
+                    bullets[id] = new Bullet(backendBullet.x, backendBullet.y)
+                }
+                else
+                {
+                    bullets[id].x = backendBullet.x;
+                    bullets[id].y = backendBullet.y;
+                }
             }
             
             for (const id in data) {
@@ -96,6 +106,17 @@
                     mobs[id].y = backendMob.y;
                 }
             }
+            
+
+            for(const id in bullets)
+            {
+                if(!bulletData[id])
+                {
+                    delete bullets[id]
+                }
+            }
+            
+            console.log(bullets);
         });
 
         connection.on("PlayerConnected", (width, height) => {
@@ -130,21 +151,23 @@
         });
 
         window.addEventListener('keyup', (event) => {
-            if(event.key == " ")
-            {
-                connection.invoke("Shoot");
-            }
             if (event.key in keys) {
                 keys[event.key] = false;
+            }
+        });
+
+        window.addEventListener('keypress', (event) => {
+            if (event.key == " ") {
+                connection.invoke("Shoot");
             }
         });
 
         function gameloop() {
             context.clearRect(0, 0, canvas.width, canvas.height)
 
-            for(let i = 0; i < bullets.length; i++)
+            for(const id in bullets)
             {
-                bullets[i].draw();
+                bullets[id].draw();
             }
 
             for (const id in players) {
@@ -162,13 +185,11 @@
         requestAnimationFrame(gameloop);
 
         class Bullet {
-            constructor(x, y, id)
+            constructor(x, y)
             {
                 this.x = x;
                 this.y = y;
-                this.id = id;
             }
-
             draw()
             {
                 context.fillStyle = "#FFFFFF";

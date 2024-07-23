@@ -8,10 +8,5 @@
         {
             this.connectionId = connectionId;
         }
-        public void Shoot()
-        {
-            Bullet bullet = new Bullet(x, y, Guid.NewGuid().ToString());
-            bullets.Add(bullet);
-        }
     }
 }

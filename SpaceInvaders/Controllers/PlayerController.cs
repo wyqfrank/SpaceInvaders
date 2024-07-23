@@ -3,15 +3,6 @@ using System;
 
 namespace SpaceInvaders.Controllers
 {
-
-
-    public class BulletController
-    {
-        // public void UpdateBullet()
-        // {
-        //     foreach()
-        // }
-    }
     public class PlayerController
     {
 
@@ -22,6 +13,26 @@ namespace SpaceInvaders.Controllers
             this.mapHeight = mapHeight;
             this.mapWidth = mapWidth;
         }
+
+        public List<Bullet> GetBulletData(List<Player> players)
+        {
+            List<Bullet> bullets = new List<Bullet>();
+            foreach(var player in players)
+            {
+                foreach(var bullet in player.bullets)
+                {
+                    bullet.Update();
+                }
+                bullets.AddRange(player.bullets);
+            }
+            return bullets;
+        }
+
+        // public void PlayerShoot(Player player)
+        // {
+        //     Bullet bullet = new Bullet(player.getX(), player.getY(), Guid.NewGuid().ToString());
+        //     player.bullets.Add(bullet);
+        // }
         public void MovePlayer(Player player, string input)
         {
             int x = player.getX();
@@ -74,5 +85,8 @@ namespace SpaceInvaders.Controllers
             Console.WriteLine(x+ ","+y); 
             // check if can be done using tuples
         }
+
+
+        
     }
 }
