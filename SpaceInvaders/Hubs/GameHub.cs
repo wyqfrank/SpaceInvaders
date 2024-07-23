@@ -14,7 +14,7 @@ namespace SpaceInvaders.Hubs
     {
         private readonly IHubContext<GameHub> hubContext;
         private readonly Game game;
-        private IDisposable subscription;
+        private IDisposable ? subscription;
 
         public HostedBroadcaster(IHubContext<GameHub> hubcontext, Game game)
         {
@@ -29,8 +29,11 @@ namespace SpaceInvaders.Hubs
         {
             List<Mob> mobPattern = game.mobPatternGenerator.GenerateRandomMobPattern(game.Width, game.Height, 5);
 
-            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => 
-                hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(game.GetUpdateAllBullets()))
+            this.subscription = Observable.Interval(TimeSpan.FromMilliseconds(50)).Subscribe(_ => 
+            {
+                game.UpdateBullets2();
+                hubContext.Clients.All.SendAsync("GlobalUpdate", JsonConvert.SerializeObject(game.mobPatternGenerator.MoveMob(mobPattern)), JsonConvert.SerializeObject(game.bullets));
+            }
                 );
             return Task.CompletedTask;
         }
@@ -50,59 +53,73 @@ namespace SpaceInvaders.Hubs
         public Dictionary<string, Player> players = new Dictionary<string, Player>();
         public PlayerController playerController = new PlayerController(500, 500);
         public Dictionary<string, Mob> mobs = new Dictionary<string, Mob>();
+        public Dictionary<string, Bullet> bullets = new Dictionary<string, Bullet>();
         public MobPatternGenerator mobPatternGenerator = new MobPatternGenerator();
 
-
-        public List<Bullet> GetUpdateAllBullets()
+        public void UpdateBullets2()
         {
-            List<Bullet> bullets = new List<Bullet>();
-            foreach (Player player in players.Values.ToList())
+            foreach(KeyValuePair<string, Bullet> keyPair in bullets)
             {
-                bullets.AddRange(UpdateBullets(player, mobs));
+                Bullet currentBullet = keyPair.Value;
+                currentBullet.Update();
+
+                if(currentBullet.y <= 0)
+                {
+                    bullets.Remove(keyPair.Key);
+                }
             }
-            return bullets;
         }
 
-        public List<Bullet> UpdateBullets(Player player, Dictionary<string, Mob> mobs)
-        {
-            List<Bullet> bulletsToRemove = new List<Bullet>();
-            List<Bullet> updatedBullets = new List<Bullet>();
-            Console.WriteLine(player.bullets.Count);
-            foreach (Bullet bullet in player.bullets.ToList())
-                {
-                Console.WriteLine(bullet.ToString());
-                bullet.Update();
+        // public List<Bullet> GetUpdateAllBullets()
+        // {
+        //     List<Bullet> bullets = new List<Bullet>();
+        //     foreach (Player player in players.Values.ToList())
+        //     {
+        //         bullets.AddRange(UpdateBullets(player, mobs));
+        //     }
+        //     return bullets;
+        // }
 
-                if (bullet.y <= 0)
-                {
+        // public List<Bullet> UpdateBullets(Player player, Dictionary<string, Mob> mobs)
+        // {
+        //     List<Bullet> bulletsToRemove = new List<Bullet>();
+        //     List<Bullet> updatedBullets = new List<Bullet>();
+        //     Console.WriteLine(player.bullets.Count);
+        //     foreach (Bullet bullet in player.bullets.ToList())
+        //         {
+        //         Console.WriteLine(bullet.ToString());
+        //         bullet.Update();
+
+        //         if (bullet.y <= 0)
+        //         {
                    
-                    bullet.Used = true;
-                    bulletsToRemove.Add(bullet);
-                }
-                foreach (Mob mob in mobs.Values)
-                {
-                    bullet.DoDamage(bullet.x, bullet.y, 5, mob);
-                    if (bullet.Used)
-                    {
-                        bulletsToRemove.Add(bullet);
-                        break; // Exit the loop as the bullet is now used
-                    }
-                }
+        //             bullet.Used = true;
+        //             bulletsToRemove.Add(bullet);
+        //         }
+        //         foreach (Mob mob in mobs.Values)
+        //         {
+        //             bullet.DoDamage(bullet.x, bullet.y, 5, mob);
+        //             if (bullet.Used)
+        //             {
+        //                 bulletsToRemove.Add(bullet);
+        //                 break; // Exit the loop as the bullet is now used
+        //             }
+        //         }
 
-                if (!bullet.Used)
-                {
-                    updatedBullets.Add(bullet);
-                }
-            }
+        //         if (!bullet.Used)
+        //         {
+        //             updatedBullets.Add(bullet);
+        //         }
+        //     }
 
-            // Remove bullets that were marked as Used
-            foreach (var bullet in bulletsToRemove)
-            {
-                player.bullets.Remove(bullet);
-            }
-            Console.WriteLine(player.bullets.Count);
-            return updatedBullets;
-        }
+        //     // Remove bullets that were marked as Used
+        //     foreach (var bullet in bulletsToRemove)
+        //     {
+        //         player.bullets.Remove(bullet);
+        //     }
+        //     Console.WriteLine(player.bullets.Count);
+        //     return updatedBullets;
+        // }
 
 
 }
@@ -148,7 +165,9 @@ public class GameHub : Hub
         public void Shoot()
         {
             Player currentPlayer = game.players[Context.ConnectionId];
-            game.playerController.PlayerShoot(currentPlayer);
+
+            game.bullets.Add(Guid.NewGuid().ToString(), new Bullet(currentPlayer.x, currentPlayer.y));
+            // game.playerController.PlayerShoot(currentPlayer);
         }
         // public async Task SendMobData()
         // {

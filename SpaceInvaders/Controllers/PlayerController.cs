@@ -28,11 +28,11 @@ namespace SpaceInvaders.Controllers
             return bullets;
         }
 
-        public void PlayerShoot(Player player)
-        {
-            Bullet bullet = new Bullet(player.getX(), player.getY(), Guid.NewGuid().ToString());
-            player.bullets.Add(bullet);
-        }
+        // public void PlayerShoot(Player player)
+        // {
+        //     Bullet bullet = new Bullet(player.getX(), player.getY(), Guid.NewGuid().ToString());
+        //     player.bullets.Add(bullet);
+        // }
         public void MovePlayer(Player player, string input)
         {
             int x = player.getX();
