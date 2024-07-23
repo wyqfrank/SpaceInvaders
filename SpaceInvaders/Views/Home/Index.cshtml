@@ -81,7 +81,7 @@
             const bulletData = JSON.parse(backendBullets);
             for(let i = 0; i < bulletData.length; i++)
             {
-
+                
                 const backendBullet = bulletData[i];
                 bullets[i] = new Bullet(backendBullet.x, backendBullet.y, backendBullet.Id);
             }
@@ -96,6 +96,8 @@
                     mobs[id].y = backendMob.y;
                 }
             }
+
+            console.log(bullets);
         });
 
         connection.on("PlayerConnected", (width, height) => {

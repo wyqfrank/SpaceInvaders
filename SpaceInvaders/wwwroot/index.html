@@ -76,14 +76,36 @@
             }
         });
 
+        function checkIfBulletExits(array, bullet)
+        {
+            for(let i =0; i < array.length; i++)
+            {
+                if(array[i].id == bullet.id)
+            {
+                return true;
+            }
+            }
+            return false;
+        }
+
         connection.on("GlobalUpdate", function (backendMobs, backendBullets) {
             const data = JSON.parse(backendMobs);
             const bulletData = JSON.parse(backendBullets);
+            console.log(bulletData);
             for(let i = 0; i < bulletData.length; i++)
             {
-
+                
                 const backendBullet = bulletData[i];
-                bullets[i] = new Bullet(backendBullet.x, backendBullet.y, backendBullet.Id);
+                bullets[i] = new Bullet(backendBullet.x, backendBullet.y, backendBullet.id);
+            }
+
+
+            for(let i = 0; i < bulletData.length; i++)
+            {
+                if(!checkIfBulletExits(bulletData, bullets[i]))
+                {
+                    bullets = bullets.map(e => e.id != bullets[i].id)
+                }
             }
             
             for (const id in data) {
@@ -96,6 +118,8 @@
                     mobs[id].y = backendMob.y;
                 }
             }
+
+            console.log(bullets);
         });
 
         connection.on("PlayerConnected", (width, height) => {
@@ -130,12 +154,14 @@
         });
 
         window.addEventListener('keyup', (event) => {
-            if(event.key == " ")
-            {
-                connection.invoke("Shoot");
-            }
             if (event.key in keys) {
                 keys[event.key] = false;
+            }
+        });
+
+        window.addEventListener('keypress', (event) => {
+            if (event.key == " ") {
+                connection.invoke("Shoot");
             }
         });
 
